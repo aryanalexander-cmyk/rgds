@@ -1,0 +1,352 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   1. RISTEK UNIVERSAL DESIGN TOKENS (Dark-First Pro Suite Palette)
+   ========================================================================== */
+:root,
+[data-theme="dark"],
+.dark {
+  /* Surfaces */
+  --ristek-bg-canvas: #080a10;       /* Main deep obsidian background */
+  --ristek-bg-surface: #0e121d;      /* Panels, cards, sidebars */
+  --ristek-bg-elevated: #141a29;     /* Hover states, pills, inputs */
+  --ristek-bg-glass: rgba(14, 18, 29, 0.82);
+
+  /* Typography */
+  --ristek-text-primary: #f8fafc;    /* Headings & primary copy */
+  --ristek-text-secondary: #94a3b8;  /* Subtitles & descriptions */
+  --ristek-text-muted: #64748b;      /* Dates, captions, placeholders */
+
+  /* Brand Accents */
+  --ristek-primary: #6366f1;         /* RISTEK Signature Indigo */
+  --ristek-primary-hover: #818cf8;
+  --ristek-accent-purple: #a855f7;   /* RISTEK Violet decorator accent */
+  --ristek-accent-amber: #fbbf24;    /* RISTEK Gold / Jam badge accent */
+  --ristek-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --ristek-gradient-subtle: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(124, 58, 237, 0.05) 100%);
+
+  /* Game Dev Suite Specialized Tool Accents */
+  --ristek-tool-stonecutter: #6366f1; /* Indigo */
+  --ristek-tool-hathoria: #f59e0b;    /* Amber */
+  --ristek-tool-tinkerbox: #10b981;   /* Emerald */
+  --ristek-tool-loom: #f43f5e;        /* Rose */
+  --ristek-tool-letterpress: #06b6d4; /* Cyan */
+
+  /* Borders & Shadows */
+  --ristek-border: #1e2638;
+  --ristek-border-subtle: rgba(255, 255, 255, 0.06);
+  --ristek-border-focus: #6366f1;
+  --ristek-shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+  --ristek-shadow-glow: 0 0 24px rgba(99, 102, 241, 0.22);
+  --ristek-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+
+  /* Radii & Typography */
+  --ristek-radius-sm: 0.5rem;
+  --ristek-radius-md: 0.75rem;
+  --ristek-radius-lg: 1rem;
+  --ristek-radius-pill: 9999px;
+  --ristek-font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --ristek-font-mono: 'JetBrains Mono', monospace;
+
+  color-scheme: dark;
+}
+
+/* Optional Light Mode Fallback */
+[data-theme="light"] {
+  --ristek-bg-canvas: #f8fafc;
+  --ristek-bg-surface: #ffffff;
+  --ristek-bg-elevated: #f1f5f9;
+  --ristek-bg-glass: rgba(255, 255, 255, 0.85);
+  --ristek-text-primary: #0f172a;
+  --ristek-text-secondary: #475569;
+  --ristek-text-muted: #94a3b8;
+  --ristek-primary: #4f46e5;
+  --ristek-primary-hover: #4338ca;
+  --ristek-border: #e2e8f0;
+  --ristek-border-subtle: rgba(0, 0, 0, 0.05);
+  --ristek-shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+  --ristek-shadow-glow: 0 0 20px rgba(79, 70, 229, 0.15);
+  --ristek-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   2. BASE & SYSTEM RESET
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--ristek-bg-canvas);
+  color: var(--ristek-text-primary);
+  font-family: var(--ristek-font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: rgba(99, 102, 241, 0.35);
+  color: #ffffff;
+}
+
+a {
+  color: var(--ristek-primary-hover);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--ristek-text-primary);
+}
+
+/* ==========================================================================
+   3. STUDIO HARDWARE & PIXEL ART ENHANCEMENTS
+   ========================================================================== */
+
+/* Crisp Pixel Art Rendering across all engines */
+.pixelated {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Studio Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f273b;
+  border-radius: var(--ristek-radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2d3852;
+}
+
+/* Viewport Checkerboard Backdrops for Alpha Atlases */
+.checker-dark {
+  background-color: #090c14;
+  background-image:
+    linear-gradient(45deg, #131826 25%, transparent 25%),
+    linear-gradient(-45deg, #131826 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #131826 75%),
+    linear-gradient(-45deg, transparent 75%, #131826 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.checker-light {
+  background-color: #cbd5e1;
+  background-image:
+    linear-gradient(45deg, #94a3b8 25%, transparent 25%),
+    linear-gradient(-45deg, #94a3b8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #94a3b8 75%),
+    linear-gradient(-45deg, transparent 75%, #94a3b8 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+/* ==========================================================================
+   4. RISTEK SHARED COMPONENT UTILITIES
+   ========================================================================== */
+
+/* Navbar */
+.ristek-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--ristek-bg-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--ristek-border);
+  box-shadow: var(--ristek-specular);
+}
+
+.ristek-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: var(--ristek-text-secondary);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Card with Specular Hardware Rim */
+.ristek-card {
+  background-color: var(--ristek-bg-surface);
+  border: 1px solid var(--ristek-border);
+  border-radius: var(--ristek-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--ristek-shadow-card), var(--ristek-specular);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ristek-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.45);
+  box-shadow: var(--ristek-shadow-card), var(--ristek-shadow-glow), var(--ristek-specular);
+}
+
+/* Gradient Stat Headings */
+.ristek-stat-value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--ristek-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Badges */
+.ristek-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--ristek-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: rgba(99, 102, 241, 0.14);
+  color: var(--ristek-primary-hover);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+}
+
+.ristek-badge-amber {
+  background-color: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.ristek-badge-emerald {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+/* Partner Logo Dark Inversion */
+.ristek-partner-logo {
+  filter: brightness(0) invert(1) opacity(0.75);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.ristek-partner-logo:hover {
+  filter: none;
+  opacity: 1;
+}
+
+/* URL Shortener & Form Inputs */
+.ristek-shortener-box {
+  max-width: 42rem;
+  margin: 0 auto;
+  background-color: var(--ristek-bg-surface);
+  border: 1px solid var(--ristek-border);
+  border-radius: var(--ristek-radius-lg);
+  padding: 2rem;
+  box-shadow: var(--ristek-shadow-card), var(--ristek-specular);
+}
+
+.ristek-input-group {
+  display: flex;
+  align-items: center;
+  background-color: var(--ristek-bg-elevated);
+  border: 1px solid var(--ristek-border);
+  border-radius: var(--ristek-radius-md);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ristek-input-group:focus-within {
+  border-color: var(--ristek-border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.ristek-input-prefix {
+  padding: 0.65rem 0.85rem;
+  background-color: rgba(11, 15, 25, 0.7);
+  color: var(--ristek-text-secondary);
+  font-family: var(--ristek-font-mono);
+  font-size: 0.8125rem;
+  border-right: 1px solid var(--ristek-border);
+}
+
+.ristek-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: transparent;
+  border: none;
+  color: var(--ristek-text-primary);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.ristek-input::placeholder {
+  color: var(--ristek-text-muted);
+}
+
+/* Primary Button with Specular Glow */
+.ristek-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--ristek-gradient);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--ristek-radius-md);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35), var(--ristek-specular);
+  transition: opacity 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.ristek-btn-primary:hover {
+  opacity: 0.94;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45), var(--ristek-specular);
+}
+
+.ristek-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Keyboard KBD pill */
+.ristek-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.45rem;
+  font-family: var(--ristek-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--ristek-text-secondary);
+  background-color: var(--ristek-bg-elevated);
+  border: 1px solid var(--ristek-border);
+  border-radius: var(--ristek-radius-sm);
+  box-shadow: 0 1px 0 1px rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================================================
+   5. NON-DESTRUCTIVE SAFEGUARDS (Ecosystem Compatibility)
+   ========================================================================== */
+.chakra-card,
+.chakra-modal__content {
+  background-color: var(--ristek-bg-surface);
+  color: var(--ristek-text-primary);
+  border-color: var(--ristek-border);
+}

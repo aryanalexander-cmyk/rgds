@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ristek Game Development Suite — Design Prototype</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    :root {
+      --bg-base: #080a0f;
+      --bg-panel: #0e111a;
+      --bg-card: #141824;
+      --bg-hover: #1c2233;
+      --border-line: #1e2638;
+      --border-bright: #2d3852;
+      --accent-stone: #6366f1;
+      --accent-sound: #f59e0b;
+      --accent-tween: #10b981;
+      --accent-capsule: #f43f5e;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg-base);
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Transparent canvas checkerboard */
+    .checker-dark {
+      background-color: #0e111a;
+      background-image:
+        linear-gradient(45deg, #171c2b 25%, transparent 25%),
+        linear-gradient(-45deg, #171c2b 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #171c2b 75%),
+        linear-gradient(-45deg, transparent 75%, #171c2b 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #222b3d; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #33405c; }
+
+    /* Segmented switchers */
+    .seg-pill {
+      background-color: #0c0f17;
+      border: 1px solid var(--border-line);
+      border-radius: 8px;
+      padding: 3px;
+      display: inline-flex;
+      gap: 2px;
+    }
+    .seg-item {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .seg-item:hover { color: #ffffff; background-color: rgba(255,255,255,0.04); }
+    .seg-item.active {
+      background: #1e2538;
+      color: #ffffff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .seg-item.active-stone {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #ffffff;
+    }
+
+    /* Inputs */
+    .num-input {
+      display: flex;
+      align-items: center;
+      background: #121622;
+      border: 1px solid var(--border-line);
+      border-radius: 6px;
+      height: 28px;
+      padding: 0 8px;
+      transition: border-color 0.15s;
+    }
+    .num-input:focus-within {
+      border-color: #6366f1;
+    }
+    .num-input input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .num-input .unit {
+      color: #64748b;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .ui-toggle {
+      position: relative;
+      width: 32px;
+      height: 18px;
+      background: #1c2233;
+      border: 1px solid var(--border-bright);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .ui-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 9999px;
+      background: #94a3b8;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .ui-toggle.checked {
+      background: #6366f1;
+      border-color: #818cf8;
+    }
+    .ui-toggle.checked::after {
+      transform: translateX(14px);
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col overflow-hidden bg-[#080a0f]">
+
+  <!-- ======================================================================= -->
+  <!-- GLOBAL SUITE HEADER (Unified across all tools)                          -->
+  <!-- ======================================================================= -->
+  <header class="h-14 bg-[#0e111a] border-b border-[#1e2638] px-4 flex items-center justify-between shrink-0 z-30">
+    <!-- Left: Suite Brand -->
+    <div class="flex items-center gap-3">
+      <div onclick="switchView('hub')" class="cursor-pointer flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+          <i class="fa-solid fa-shapes text-sm"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-sm tracking-tight text-white group-hover:text-indigo-300 transition-colors">RISTEK</span>
+            <span class="text-xs font-semibold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">GDS</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-medium">Game Development Suite</div>
+        </div>
+      </div>
+
+      <div class="h-5 w-[1px] bg-[#1e2638] mx-2"></div>
+
+      <!-- Quick Tool Switcher Pills -->
+      <nav class="flex items-center gap-1">
+        <button id="nav-hub" onclick="switchView('hub')" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#1e2538] text-white transition flex items-center gap-1.5">
+          <i class="fa-solid fa-house text-[11px] text-indigo-400"></i>
+          <span>Hub</span>
+        </button>
+        <button id="nav-stonecutter" onclick="switchView('stonecutter')" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-cube text-[11px] text-indigo-400"></i>
+          <span>Stonecutter</span>
+          <span class="text-[9px] px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono">v1.0</span>
+        </button>
+        <button onclick="showToast('Hathoria (Procedural SFX) will be integrated in Phase 2!')" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-300 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-wave-square text-[11px] text-amber-500/70"></i>
+          <span>Hathoria</span>
+        </button>
+        <button onclick="showToast('Tinkerbox (Motion & Easing) is coming in Phase 3!')" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-300 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-bezier-curve text-[11px] text-emerald-500/70"></i>
+          <span>Tinkerbox</span>
+        </button>
+        <button onclick="showToast('Loom (Storefront Resizer) is coming in Phase 4!')" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-300 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-images text-[11px] text-rose-500/70"></i>
+          <span>Loom</span>
+        </button>
+        <button onclick="showToast('Letterpress (Bitmap Font Studio) is coming in Phase 5!')" class="px-2.5 py-1 rounded-md text-xs font-medium text-slate-500 hover:text-slate-300 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-font text-[11px] text-cyan-500/70"></i>
+          <span>Letterpress</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Center: Global Target Engine Selector -->
+    <div class="flex items-center gap-2 bg-[#0c0f17] border border-[#1e2638] px-2.5 py-1 rounded-lg">
+      <span class="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+        <i class="fa-solid fa-gear text-slate-500"></i> Target Engine:
+      </span>
+      <select id="globalEngineSelect" onchange="onEngineChange(this.value)" class="bg-transparent text-xs font-bold text-indigo-300 outline-none cursor-pointer">
+        <option value="godot" class="bg-[#0e111a] text-white">Godot 4 (.tres / GDScript)</option>
+        <option value="unity" class="bg-[#0e111a] text-white">Unity (C# / SpriteAtlas)</option>
+        <option value="generic" class="bg-[#0e111a] text-white">Generic (Raw JSON / PNG)</option>
+      </select>
+    </div>
+
+    <!-- Right: Suite Telemetry & Quick Action -->
+    <div class="flex items-center gap-2.5">
+      <div class="hidden md:flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>100% Local Browser Memory</span>
+      </div>
+      <button onclick="switchView('stonecutter')" class="h-8 px-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition">
+        <i class="fa-solid fa-play text-[10px]"></i>
+        <span>Open Stonecutter</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ======================================================================= -->
+  <!-- VIEW 1: RGDS HUB / HOME PAGE                                            -->
+  <!-- ======================================================================= -->
+  <main id="view-hub" class="flex-1 overflow-y-auto p-6 md:p-10 space-y-8">
+    
+    <!-- Hero Banner -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#121624] via-[#0e121d] to-[#080a0f] border border-[#21293d] p-8 shadow-2xl">
+      <div class="absolute -right-12 -top-12 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+      <div class="relative z-10 max-w-3xl space-y-3">
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-semibold">
+          <i class="fa-solid fa-sparkles text-[11px]"></i>
+          <span>Ristek Game Development SIG Suite</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
+          Craft Fast. Pack Tight. <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">Ship Games.</span>
+        </h1>
+        <p class="text-sm md:text-base text-slate-300 leading-relaxed">
+          A zero-friction, browser-native game development workstation designed for game jams and production sprints. Everything runs in client-side memory with tailored 1-click exports for <strong class="text-white">Godot 4</strong> and <strong class="text-white">Unity</strong>.
+        </p>
+
+        <!-- Quick Launch Bar -->
+        <div class="pt-2 flex flex-wrap items-center gap-3">
+          <button onclick="switchView('stonecutter')" class="h-10 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition">
+            <i class="fa-solid fa-cube"></i>
+            <span>Launch Stonecutter (Sprite &amp; Atlas Lab)</span>
+          </button>
+          <button onclick="rollJamPrompt()" class="h-10 px-4 rounded-xl bg-[#171c2b] hover:bg-[#1e2438] border border-[#263147] text-slate-200 text-xs font-semibold flex items-center gap-2 transition">
+            <i class="fa-solid fa-dice text-amber-400"></i>
+            <span>Roll Game Jam Theme Idea</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Game Jam Prompt Box (Interactive) -->
+    <div id="jamPromptCard" class="hidden rounded-xl bg-[#111522] border border-amber-500/30 p-4 shadow-xl flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg shrink-0">
+          <i class="fa-solid fa-dice-d20"></i>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Random Jam Prompt Generator</div>
+          <div id="jamPromptText" class="text-sm font-semibold text-white mt-0.5">...</div>
+        </div>
+      </div>
+      <button onclick="rollJamPrompt()" class="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold border border-amber-500/30 shrink-0">
+        Re-Roll
+      </button>
+    </div>
+
+    <!-- Tool Catalog Grid -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-tight">Suite Tool Directory</h2>
+          <p class="text-xs text-slate-400">Standalone client-side modules tuned to your active engine workflow</p>
+        </div>
+        <span class="text-xs font-mono text-slate-400">Targeting: <strong id="hubEngineLabel" class="text-indigo-300">Godot 4</strong></span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <!-- CARD 1: STONECUTTER (READY) -->
+        <div class="group rounded-2xl bg-[#0f131e] hover:bg-[#131826] border border-[#1e2638] hover:border-indigo-500/50 p-5 flex flex-col justify-between transition-all duration-200 shadow-lg hover:shadow-indigo-500/10">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-lg shadow-sm">
+                <i class="fa-solid fa-cube"></i>
+              </div>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                ● Ready to Use
+              </span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">Stonecutter</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Precision texture packer &amp; slicer. MaxRects algorithm, 1px pixel-art edge extrusion to kill UV bleed, onion-skin animator, and GIF generator.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-300 border border-[#222a3d]">MaxRects</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-300 border border-[#222a3d]">Border Extrude</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-300 border border-[#222a3d]">Reverse Slicer</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-300 border border-[#222a3d]">GIF89a</span>
+            </div>
+          </div>
+          <div class="pt-5 mt-4 border-t border-[#1a2133] flex items-center justify-between">
+            <span class="text-[11px] font-mono text-indigo-300">Exports: <span class="font-bold engine-export-pill">Godot .tres</span></span>
+            <button onclick="switchView('stonecutter')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+              <span>Open Tool</span>
+              <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- CARD 2: HATHORIA (PHASE 2) -->
+        <div class="rounded-2xl bg-[#0f131e]/70 border border-[#1e2638] p-5 flex flex-col justify-between opacity-85 hover:opacity-100 transition shadow-lg">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-300 text-lg">
+                <i class="fa-solid fa-wave-square"></i>
+              </div>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                Phase 2
+              </span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Hathoria</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Procedural 8-bit &amp; 16-bit sound synthesizer. Jump, laser, explosion presets, sound mutator, live pitch test keys, and WAV/OGG download.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-400 border border-[#222a3d]">Web Audio API</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-400 border border-[#222a3d]">Bfxr presets</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-400 border border-[#222a3d]">16-bit WAV</span>
+            </div>
+          </div>
+          <div class="pt-5 mt-4 border-t border-[#1a2133] flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">Roadmap: In Development</span>
+            <button disabled class="px-3 py-1.5 rounded-lg bg-[#181d2a] text-slate-500 text-xs font-semibold cursor-not-allowed">
+              Coming Soon
+            </button>
+          </div>
+        </div>
+
+        <!-- CARD 3: TINKERBOX (PHASE 3) -->
+        <div class="rounded-2xl bg-[#0f131e]/70 border border-[#1e2638] p-5 flex flex-col justify-between opacity-85 hover:opacity-100 transition shadow-lg">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 text-lg">
+                <i class="fa-solid fa-bezier-curve"></i>
+              </div>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                Phase 3
+              </span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Tinkerbox</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Interactive Bézier easing playground. Preview bounce, elastic, and cubic motion in real time with 1-click GDScript and C# DOTween code generation.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-400 border border-[#222a3d]">create_tween()</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-400 border border-[#222a3d]">DOTween</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#171c2b] text-slate-400 border border-[#222a3d]">Live Motion</span>
+            </div>
+          </div>
+          <div class="pt-5 mt-4 border-t border-[#1a2133] flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">Roadmap: In Development</span>
+            <button disabled class="px-3 py-1.5 rounded-lg bg-[#181d2a] text-slate-500 text-xs font-semibold cursor-not-allowed">
+              Coming Soon
+            </button>
+          </div>
+        </div>
+
+        <!-- CARD 4: LOOM (PHASE 4) -->
+        <div class="rounded-2xl bg-[#0f131e]/70 border border-[#1e2638] p-5 flex flex-col justify-between opacity-85 hover:opacity-100 transition shadow-lg">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-rose-300 text-lg">
+                <i class="fa-solid fa-images"></i>
+              </div>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/25">
+                Phase 4
+              </span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Loom</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Storefront resizer for game jam submissions. Upload 1 key art image, adjust crop viewports, and batch export Steam capsules and Itch.io covers in a .zip.
+              </p>
+            </div>
+          </div>
+          <div class="pt-5 mt-4 border-t border-[#1a2133] flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">Storefront Batch Exporter</span>
+            <button disabled class="px-3 py-1.5 rounded-lg bg-[#181d2a] text-slate-500 text-xs font-semibold cursor-not-allowed">Planned</button>
+          </div>
+        </div>
+
+        <!-- CARD 5: LETTERPRESS (PHASE 5) -->
+        <div class="rounded-2xl bg-[#0f131e]/70 border border-[#1e2638] p-5 flex flex-col justify-between opacity-85 hover:opacity-100 transition shadow-lg">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 text-lg">
+                <i class="fa-solid fa-font"></i>
+              </div>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/25">
+                Phase 5
+              </span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white">Letterpress</h3>
+              <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                Modern BMFont and SpriteFont generator. Converts .ttf/.otf to packed glyph atlases with outlines, drop shadows, and Godot 4 / TextMeshPro descriptors.
+              </p>
+            </div>
+          </div>
+          <div class="pt-5 mt-4 border-t border-[#1a2133] flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">Bitmap Font Studio</span>
+            <button disabled class="px-3 py-1.5 rounded-lg bg-[#181d2a] text-slate-500 text-xs font-semibold cursor-not-allowed">Planned</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================================================================= -->
+  <!-- VIEW 2: STREAMLINED STONECUTTER (2-Panel Clean UI Layout)               -->
+  <!-- ======================================================================= -->
+  <div id="view-stonecutter" class="flex-1 hidden flex-col overflow-hidden min-h-0">
+    
+    <!-- Stonecutter Sub-Header (Mode Switcher + View Controls) -->
+    <div class="h-11 bg-[#101420] border-b border-[#1e2638] px-3.5 flex items-center justify-between shrink-0 z-20">
+      <!-- Mode Tabs (Pack / Slice / GIF) -->
+      <div class="seg-pill">
+        <button id="scMode-pack" onclick="setScMode('pack')" class="seg-item active-stone">
+          <i class="fa-solid fa-table-cells text-[11px]"></i>
+          <span>Packer</span>
+          <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">12</span>
+        </button>
+        <button id="scMode-slice" onclick="setScMode('slice')" class="seg-item">
+          <i class="fa-solid fa-scissors text-[11px]"></i>
+          <span>Reverse Slicer</span>
+        </button>
+        <button id="scMode-gif" onclick="setScMode('gif')" class="seg-item">
+          <i class="fa-solid fa-film text-[11px]"></i>
+          <span>GIF Studio</span>
+        </button>
+      </div>
+
+      <!-- Center Viewport Shortcuts -->
+      <div class="flex items-center gap-1.5 bg-[#0a0d14] border border-[#1e2638] px-2 py-0.5 rounded-lg text-xs">
+        <button onclick="zoomCanvas(-0.2)" class="w-6 h-6 rounded hover:bg-white/10 text-slate-300 flex items-center justify-center">
+          <i class="fa-solid fa-minus text-[10px]"></i>
+        </button>
+        <span id="zoomReadout" class="font-mono text-slate-200 w-12 text-center text-[11px]">100%</span>
+        <button onclick="zoomCanvas(0.2)" class="w-6 h-6 rounded hover:bg-white/10 text-slate-300 flex items-center justify-center">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+        </button>
+        <div class="h-3 w-[1px] bg-[#1e2638] mx-1"></div>
+        <button onclick="toggleBounds()" id="boundsToggleBtn" class="px-2 py-0.5 rounded hover:bg-white/10 text-slate-300 text-[11px] font-medium">
+          Bounds
+        </button>
+      </div>
+
+      <!-- Right: Primary Export Action -->
+      <div class="flex items-center gap-2">
+        <button onclick="toggleAnimDrawer()" class="h-7 px-3 rounded-lg bg-[#192033] hover:bg-[#202940] border border-[#26324f] text-indigo-300 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-play text-[10px]"></i>
+          <span>Animation Drawer</span>
+        </button>
+        <button onclick="triggerEngineExport()" id="stoneExportBtn" class="h-7 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow transition">
+          <i class="fa-solid fa-download text-[11px]"></i>
+          <span id="stoneExportLabel">Export Godot 4 (.tres)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Workspace (Left Tray + Center Canvas + Right Inspector) -->
+    <div class="flex-1 flex overflow-hidden min-h-0 relative">
+      
+      <!-- LEFT ASSET TRAY (Collapsible 260px) -->
+      <aside id="leftAssetTray" class="w-[260px] bg-[#0c101a] border-r border-[#1e2638] flex flex-col shrink-0 min-h-0">
+        <!-- Add / Drop Button -->
+        <div class="p-3 border-b border-[#1e2638]">
+          <div class="rounded-xl border border-dashed border-indigo-500/40 bg-indigo-950/20 hover:bg-indigo-950/30 p-3 text-center cursor-pointer transition">
+            <div class="text-xs font-bold text-indigo-300 flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-plus-circle"></i>
+              <span>Drop PNG Sprites</span>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">or click to browse</div>
+          </div>
+        </div>
+
+        <!-- Sprites List Header -->
+        <div class="px-3 py-2 bg-[#0e121d] border-b border-[#1e2638] flex items-center justify-between text-xs">
+          <span class="font-bold uppercase tracking-wider text-slate-400 text-[10px] flex items-center gap-1.5">
+            <i class="fa-solid fa-images text-indigo-400"></i>
+            <span>Frames (12)</span>
+          </span>
+          <button onclick="showToast('Demo sprites reloaded!')" class="text-[11px] text-indigo-300 hover:text-white font-medium">Demo: Hero</button>
+        </div>
+
+        <!-- Sprites List -->
+        <div class="flex-1 overflow-y-auto p-2 space-y-1">
+          <!-- Sample Rows -->
+          <div class="flex items-center gap-2 p-1.5 rounded-lg bg-indigo-600/15 border border-indigo-500/30 text-white text-xs cursor-pointer">
+            <div class="w-7 h-7 rounded bg-[#171c2b] checker-dark flex items-center justify-center border border-slate-700">
+              <div class="w-4 h-4 bg-indigo-400 rounded-sm"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">hero_run_01.png</div>
+              <div class="font-mono text-[10px] text-slate-400">48×48 px</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 p-1.5 rounded-lg bg-[#121624] hover:bg-[#171c2b] border border-[#1e2638] text-slate-300 text-xs cursor-pointer">
+            <div class="w-7 h-7 rounded bg-[#171c2b] checker-dark flex items-center justify-center border border-slate-700">
+              <div class="w-4 h-4 bg-indigo-400/80 rounded-sm"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">hero_run_02.png</div>
+              <div class="font-mono text-[10px] text-slate-400">48×48 px</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 p-1.5 rounded-lg bg-[#121624] hover:bg-[#171c2b] border border-[#1e2638] text-slate-300 text-xs cursor-pointer">
+            <div class="w-7 h-7 rounded bg-[#171c2b] checker-dark flex items-center justify-center border border-slate-700">
+              <div class="w-4 h-4 bg-indigo-400/70 rounded-sm"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">hero_run_03.png</div>
+              <div class="font-mono text-[10px] text-slate-400">48×48 px</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 p-1.5 rounded-lg bg-[#121624] hover:bg-[#171c2b] border border-[#1e2638] text-slate-300 text-xs cursor-pointer">
+            <div class="w-7 h-7 rounded bg-[#171c2b] checker-dark flex items-center justify-center border border-slate-700">
+              <div class="w-4 h-4 bg-indigo-400/60 rounded-sm"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">hero_run_04.png</div>
+              <div class="font-mono text-[10px] text-slate-400">48×48 px</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER CANVAS VIEWPORT (Spacious & Clean) -->
+      <main class="flex-1 flex flex-col bg-[#080a0f] relative overflow-hidden items-center justify-center">
+        <!-- Interactive Canvas Stage -->
+        <div id="canvasStage" class="checker-dark border border-[#2d3852] rounded shadow-2xl p-4 flex items-center justify-center transition-transform">
+          <!-- Visual Atlas Simulation -->
+          <div class="grid grid-cols-4 gap-1 p-2 bg-black/40 border border-indigo-500/30 rounded">
+            <div class="w-16 h-16 border border-dashed border-indigo-400/50 flex flex-col items-center justify-center text-[10px] font-mono text-indigo-300">
+              <i class="fa-solid fa-person-running text-lg text-indigo-400 mb-0.5"></i>
+              #1
+            </div>
+            <div class="w-16 h-16 border border-dashed border-indigo-400/50 flex flex-col items-center justify-center text-[10px] font-mono text-indigo-300">
+              <i class="fa-solid fa-person-running text-lg text-indigo-400 mb-0.5"></i>
+              #2
+            </div>
+            <div class="w-16 h-16 border border-dashed border-indigo-400/50 flex flex-col items-center justify-center text-[10px] font-mono text-indigo-300">
+              <i class="fa-solid fa-person-running text-lg text-indigo-400 mb-0.5"></i>
+              #3
+            </div>
+            <div class="w-16 h-16 border border-dashed border-indigo-400/50 flex flex-col items-center justify-center text-[10px] font-mono text-indigo-300">
+              <i class="fa-solid fa-person-running text-lg text-indigo-400 mb-0.5"></i>
+              #4
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Telemetry Pill at Bottom of Canvas -->
+        <div class="absolute bottom-4 left-4 bg-[#0e111a]/90 backdrop-blur-md border border-[#1e2638] rounded-lg px-3 py-1.5 flex items-center gap-3 text-xs font-mono shadow-xl">
+          <span class="text-slate-400">Atlas: <strong class="text-white">256×128 px</strong></span>
+          <span class="text-slate-600">•</span>
+          <span class="text-slate-400">Efficiency: <strong class="text-emerald-400">92.4%</strong></span>
+          <span class="text-slate-600">•</span>
+          <span class="text-slate-400">Bleed Extrude: <strong class="text-indigo-300">1 px (Active)</strong></span>
+        </div>
+
+        <!-- FLOATING SLIDE-UP ANIMATION DRAWER (No screen clutter when closed!) -->
+        <div id="animDrawer" class="hidden absolute bottom-0 inset-x-0 bg-[#0e111a]/95 backdrop-blur-md border-t border-[#1e2638] p-3 shadow-2xl z-20 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-16 h-16 rounded-lg bg-[#141824] checker-dark border border-slate-700 flex items-center justify-center text-indigo-300 text-2xl">
+              <i class="fa-solid fa-person-running animate-bounce"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white">Live Animation Preview (Hero Run)</div>
+              <div class="text-[11px] font-mono text-slate-400">Playing at 12 FPS • Frame 2/12</div>
+              <div class="flex items-center gap-2 mt-1">
+                <button class="px-2 py-0.5 rounded bg-indigo-600 text-white text-[10px] font-bold">Pause</button>
+                <button class="px-2 py-0.5 rounded bg-[#1c2233] text-slate-300 text-[10px]">Onion Skin: On</button>
+              </div>
+            </div>
+          </div>
+          <button onclick="toggleAnimDrawer()" class="w-7 h-7 rounded-lg bg-[#171c2b] hover:bg-[#20273c] text-slate-400 hover:text-white flex items-center justify-center text-xs">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </main>
+
+      <!-- RIGHT INSPECTOR (Focused 280px, Progressive Disclosure) -->
+      <aside class="w-[280px] bg-[#0c101a] border-l border-[#1e2638] flex flex-col shrink-0 overflow-y-auto">
+        
+        <!-- Section 1: Everyday Essentials (What 90% of devs tweak) -->
+        <div class="p-4 border-b border-[#1e2638] space-y-3.5">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-sliders text-indigo-400"></i>
+            <span>Essential Packing</span>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs text-slate-300 font-medium">Layout Algorithm</label>
+            <select class="w-full bg-[#121622] border border-[#1e2638] rounded-md px-2 py-1 text-xs text-white outline-none">
+              <option selected>MaxRects (Optimal Area)</option>
+              <option>Uniform Grid (Columns)</option>
+              <option>Horizontal Strip (1 Row)</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div class="space-y-1">
+              <label class="text-[11px] text-slate-400">Padding</label>
+              <div class="num-input">
+                <input type="number" value="2" min="0" max="64" />
+                <span class="unit">px</span>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <label class="text-[11px] text-indigo-300 font-semibold" title="Duplicates edge pixels to eliminate subpixel filtering seams in Godot & Unity">
+                Border Extrude
+              </label>
+              <div class="num-input border-indigo-500/40">
+                <input type="number" value="1" min="0" max="16" />
+                <span class="unit text-indigo-300">px</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trim Transparency Toggle -->
+          <div class="flex items-center justify-between pt-1">
+            <div>
+              <div class="text-xs font-semibold text-slate-200">Trim Transparency</div>
+              <div class="text-[10px] text-slate-400">Crops empty pixels &amp; keeps offsets</div>
+            </div>
+            <div onclick="this.classList.toggle('checked')" class="ui-toggle checked"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Collapsible "Advanced" Accordion (Hides the clutter!) -->
+        <div class="border-b border-[#1e2638]">
+          <button onclick="toggleAccordion('advOptions')" class="w-full p-3.5 flex items-center justify-between text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-white/5 transition">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-gears text-slate-500"></i>
+              <span>Advanced Packing Rules</span>
+            </span>
+            <i id="advChevron" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+          </button>
+          
+          <div id="advOptions" class="hidden p-3.5 pt-0 space-y-3 bg-[#0a0d14]/50">
+            <div class="space-y-1">
+              <label class="text-[11px] text-slate-400">MaxRects Heuristic Rule</label>
+              <select class="w-full bg-[#121622] border border-[#1e2638] rounded-md px-2 py-1 text-xs text-slate-300">
+                <option>Auto Best Fit</option>
+                <option>Best Short Side Fit (BSSF)</option>
+                <option>Best Long Side Fit (BLSF)</option>
+                <option>Best Area Fit (BAF)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400">Power-of-Two (POT)</span>
+              <div onclick="this.classList.toggle('checked')" class="ui-toggle"></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400">Force Square Texture</span>
+              <div onclick="this.classList.toggle('checked')" class="ui-toggle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Engine-First Export Hub -->
+        <div class="p-4 space-y-2 mt-auto">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Engine 1-Click Exports</div>
+          <button onclick="triggerEngineExport()" class="w-full h-8 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow transition">
+            <i class="fa-solid fa-file-export"></i>
+            <span id="sideExportLabel">Export Godot 4 Atlas (.tres)</span>
+          </button>
+          <button onclick="showToast('Downloaded raw spritesheet.png and atlas.json!')" class="w-full h-8 rounded-lg bg-[#141824] hover:bg-[#1b2130] border border-[#1e2638] text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-image"></i>
+            <span>Download PNG + JSON</span>
+          </button>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 hidden bg-[#141824] border border-indigo-500/40 rounded-xl px-4 py-2.5 shadow-2xl text-xs font-medium text-white flex items-center gap-2">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <script>
+    let currentEngine = 'godot';
+    let currentZoom = 1.0;
+
+    const jamThemes = [
+      { theme: "Cyberpunk", mechanic: "Grappling Hook Only", restriction: "Black & White (1-Bit)" },
+      { theme: "Deep Ocean", mechanic: "Sonar Echolocation", restriction: "Zero UI / Diegetic Audio Only" },
+      { theme: "Time Travel", mechanic: "Rewind Every 10 Seconds", restriction: "Single Screen Room" },
+      { theme: "Medieval Fantasy", mechanic: "Spell Crafting Chemistry", restriction: "Mouse / Touch Only" },
+      { theme: "Cosmic Horror", mechanic: "Sanity Affects Gravity", restriction: "60-Second Speedruns" }
+    ];
+
+    function switchView(viewName) {
+      const hub = document.getElementById('view-hub');
+      const stone = document.getElementById('view-stonecutter');
+      const navHub = document.getElementById('nav-hub');
+      const navStone = document.getElementById('nav-stonecutter');
+
+      if (viewName === 'hub') {
+        hub.classList.remove('hidden');
+        stone.classList.add('hidden');
+        navHub.className = "px-2.5 py-1 rounded-md text-xs font-semibold bg-[#1e2538] text-white transition flex items-center gap-1.5";
+        navStone.className = "px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition flex items-center gap-1.5";
+      } else {
+        hub.classList.add('hidden');
+        stone.classList.remove('hidden');
+        stone.classList.add('flex');
+        navHub.className = "px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition flex items-center gap-1.5";
+        navStone.className = "px-2.5 py-1 rounded-md text-xs font-semibold bg-[#1e2538] text-white transition flex items-center gap-1.5";
+      }
+    }
+
+    function onEngineChange(val) {
+      currentEngine = val;
+      const hubLabel = document.getElementById('hubEngineLabel');
+      const stoneLabel = document.getElementById('stoneExportLabel');
+      const sideLabel = document.getElementById('sideExportLabel');
+      const pill = document.querySelector('.engine-export-pill');
+
+      if (val === 'godot') {
+        hubLabel.textContent = 'Godot 4';
+        stoneLabel.textContent = 'Export Godot 4 (.tres)';
+        sideLabel.textContent = 'Export Godot 4 Atlas (.tres)';
+        pill.textContent = 'Godot .tres';
+        showToast('Engine profile set to Godot 4 (AtlasTexture .tres ready)');
+      } else if (val === 'unity') {
+        hubLabel.textContent = 'Unity Engine';
+        stoneLabel.textContent = 'Export Unity (JSON + Script)';
+        sideLabel.textContent = 'Export Unity SpriteAtlas';
+        pill.textContent = 'Unity SpriteAtlas';
+        showToast('Engine profile set to Unity (SpriteAtlas & C# Slicer ready)');
+      } else {
+        hubLabel.textContent = 'Generic Web/Raw';
+        stoneLabel.textContent = 'Export Spritesheet (ZIP)';
+        sideLabel.textContent = 'Export PNG + JSON';
+        pill.textContent = 'Raw PNG + JSON';
+        showToast('Engine profile set to Generic (Raw formats)');
+      }
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      const chev = document.getElementById('advChevron');
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        chev.classList.add('rotate-180');
+      } else {
+        el.classList.add('hidden');
+        chev.classList.remove('rotate-180');
+      }
+    }
+
+    function toggleAnimDrawer() {
+      const drawer = document.getElementById('animDrawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    function zoomCanvas(delta) {
+      currentZoom = Math.min(3.0, Math.max(0.5, currentZoom + delta));
+      document.getElementById('zoomReadout').textContent = Math.round(currentZoom * 100) + '%';
+      document.getElementById('canvasStage').style.transform = `scale(${currentZoom})`;
+    }
+
+    function toggleBounds() {
+      const btn = document.getElementById('boundsToggleBtn');
+      btn.classList.toggle('bg-indigo-600/30');
+      btn.classList.toggle('text-indigo-300');
+      showToast('Toggled sprite bounding overlay guides');
+    }
+
+    function triggerEngineExport() {
+      if (currentEngine === 'godot') {
+        showToast('Generated "spritesheet.png" + Godot 4 AtlasTexture "spritesheet.tres"!');
+      } else if (currentEngine === 'unity') {
+        showToast('Generated "spritesheet.png" + Unity SpriteAtlas JSON & C# AutoSlicer script!');
+      } else {
+        showToast('Generated "spritesheet.png" and standard atlas metadata JSON!');
+      }
+    }
+
+    function rollJamPrompt() {
+      const pick = jamThemes[Math.floor(Math.random() * jamThemes.length)];
+      const card = document.getElementById('jamPromptCard');
+      const text = document.getElementById('jamPromptText');
+      card.classList.remove('hidden');
+      text.innerHTML = `<span class="text-indigo-400">${pick.theme}</span> + <span class="text-amber-400">${pick.mechanic}</span> + <span class="text-rose-400">${pick.restriction}</span>`;
+      showToast('Rolled a new game jam prompt idea!');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toastMsg');
+      text.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>

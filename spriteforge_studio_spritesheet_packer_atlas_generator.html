@@ -1,0 +1,3998 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpriteForge Studio — Spritesheet Packer, Slicer & GIF Suite</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            canvasBg: '#090b10',
+            panel: '#11141d',
+            panelHeader: '#141824',
+            elevated: '#171b26',
+            elevatedHover: '#1e2433',
+            line: '#1f2533',
+            lineBright: '#2d3548',
+            accent: '#6366f1',
+            accentViolet: '#8b5cf6'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #090b10;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Crisp Pixel Art Rendering */
+    .pixelated {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Custom Thin Studio Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1017;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #252c3d;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3b4661;
+    }
+
+    /* Viewport Backdrop Patterns (Strictly Visual Only — Never Exported) */
+    .backdrop-checker-dark {
+      background-color: #12151e;
+      background-image:
+        linear-gradient(45deg, #1b202e 25%, transparent 25%),
+        linear-gradient(-45deg, #1b202e 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1b202e 75%),
+        linear-gradient(-45deg, transparent 75%, #1b202e 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    .backdrop-checker-light {
+      background-color: #cbd5e1;
+      background-image:
+        linear-gradient(45deg, #94a3b8 25%, transparent 25%),
+        linear-gradient(-45deg, #94a3b8 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #94a3b8 75%),
+        linear-gradient(-45deg, transparent 75%, #94a3b8 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    .backdrop-magenta {
+      background-color: #ff00ff;
+    }
+
+    .backdrop-green {
+      background-color: #00ff00;
+    }
+
+    .backdrop-slate {
+      background-color: #0f172a;
+    }
+
+    /* Subtle ambient grid in deep workspace */
+    .workspace-grid-bg {
+      background-color: #090b10;
+      background-image: radial-gradient(#1e2433 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Segmented Pill Controls */
+    .seg-group {
+      display: flex;
+      background-color: #0c0e14;
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid #1f2533;
+      gap: 2px;
+    }
+    .seg-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      border-radius: 7px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .seg-btn:hover {
+      color: #f1f5f9;
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+    .seg-btn.active-indigo {
+      background: linear-gradient(135deg, #6366f1, #7c3aed);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.35);
+    }
+    .seg-btn.active-emerald {
+      background: linear-gradient(135deg, #10b981, #0d9488);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.35);
+    }
+    .seg-btn.active-fuchsia {
+      background: linear-gradient(135deg, #d946ef, #ec4899);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(217, 70, 239, 0.35);
+    }
+
+    /* Custom Toggle Switch */
+    .ui-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .ui-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .ui-switch-track {
+      width: 34px;
+      height: 18px;
+      background-color: #222838;
+      border: 1px solid #30394f;
+      border-radius: 9999px;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ui-switch-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      background-color: #94a3b8;
+      border-radius: 9999px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ui-switch input:checked + .ui-switch-track {
+      background-color: #6366f1;
+      border-color: #818cf8;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
+    }
+    .ui-switch input:checked + .ui-switch-track::after {
+      transform: translateX(16px);
+      background-color: #ffffff;
+    }
+    .ui-switch-emerald input:checked + .ui-switch-track {
+      background-color: #10b981;
+      border-color: #34d399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+    }
+    .ui-switch-fuchsia input:checked + .ui-switch-track {
+      background-color: #d946ef;
+      border-color: #e879f9;
+      box-shadow: 0 0 10px rgba(217, 70, 239, 0.35);
+    }
+
+    /* Styled Range Sliders */
+    input[type="range"].ui-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      background: #1f2533;
+      border-radius: 9999px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].ui-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #818cf8;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 6px rgba(99, 102, 241, 0.6);
+      cursor: pointer;
+      transition: transform 0.12s ease, background-color 0.12s ease;
+    }
+    input[type="range"].ui-range::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      background: #6366f1;
+    }
+
+    /* Compact Numeric Input Group with Unit Suffix */
+    .num-field {
+      display: flex;
+      align-items: center;
+      background-color: #171b26;
+      border: 1px solid #1f2533;
+      border-radius: 8px;
+      padding: 0 8px;
+      height: 30px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .num-field:focus-within {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+    .num-field input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+    .num-field .unit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #64748b;
+      margin-left: 4px;
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+
+    /* Custom Studio Select */
+    .ui-select {
+      appearance: none;
+      background-color: #171b26;
+      border: 1px solid #1f2533;
+      border-radius: 8px;
+      padding: 5px 26px 5px 10px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #f1f5f9;
+      outline: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      background-position: right 6px center;
+      background-repeat: no-repeat;
+      background-size: 14px;
+      transition: border-color 0.15s ease;
+    }
+    .ui-select:focus {
+      border-color: #6366f1;
+    }
+
+    /* Value Badge */
+    .val-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 1px 6px;
+      border-radius: 5px;
+      background-color: rgba(99, 102, 241, 0.14);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.28);
+    }
+
+    /* Inspector Section Card */
+    .insp-section {
+      border-bottom: 1px solid #1f2533;
+      padding: 14px 16px;
+    }
+    .insp-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    /* Remove Spinners on Number Inputs */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen flex flex-col overflow-hidden">
+
+  <!-- GLOBAL FULL-WINDOW DRAG & DROP OVERLAY -->
+  <div id="globalDropOverlay" class="fixed inset-0 z-50 hidden bg-indigo-950/80 backdrop-blur-md border-4 border-dashed border-indigo-400 flex items-center justify-center p-6 pointer-events-none">
+    <div class="bg-panel border border-indigo-500/40 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 text-3xl">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+      </div>
+      <h2 id="dropOverlayTitle" class="text-lg font-bold text-white mb-1">Drop PNG Sprites Anywhere</h2>
+      <p id="dropOverlaySub" class="text-xs text-slate-300">100% local processing in browser memory — 32-bit RGBA transparency preserved</p>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION STACK -->
+  <div id="toastStack" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ======================================================================= -->
+  <!-- TOP APPLICATION HEADER (52px Fixed)                                     -->
+  <!-- ======================================================================= -->
+  <header class="h-[52px] bg-panel border-b border-line px-3.5 flex items-center justify-between shrink-0 z-30 gap-3">
+    <!-- Left: Brand Identity + Local Privacy Pill + Filename -->
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/25 border border-indigo-400/30 shrink-0">
+          <i class="fa-solid fa-cubes-stacked text-white text-sm"></i>
+        </div>
+        <div class="leading-tight">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm tracking-tight text-white">SpriteForge <span class="text-indigo-400 font-semibold">Studio</span></span>
+            <span class="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/25" title="Zero server uploads. All PNGs, ZIPs, and GIFs are processed 100% locally in your browser.">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>100% Local
+            </span>
+          </div>
+          <div class="text-[10px] text-slate-400 hidden xl:block">Desktop-Grade Texture Packer, Reverse Slicer &amp; GIF89a Suite</div>
+        </div>
+      </div>
+
+      <div class="h-5 w-[1px] bg-line hidden md:block"></div>
+
+      <!-- Project / Sheet Name Input -->
+      <div class="hidden md:flex items-center bg-elevated border border-line rounded-lg px-2.5 h-7 focus-within:border-indigo-500 transition">
+        <i class="fa-regular fa-file-image text-slate-500 text-[11px] mr-1.5"></i>
+        <input id="sheetNameInput" type="text" value="spritesheet" oninput="onSheetNameChange()" class="bg-transparent text-xs font-mono text-slate-100 w-28 focus:outline-none" placeholder="spritesheet" />
+        <span class="text-[10px] font-mono text-slate-500">.png</span>
+      </div>
+    </div>
+
+    <!-- Center: 3-Mode Segmented Pill Switcher -->
+    <div class="seg-group w-auto">
+      <button id="modeTab-packer" onclick="switchWorkspaceMode('packer')" class="seg-btn active-indigo">
+        <i class="fa-solid fa-table-cells text-[11px]"></i>
+        <span>1. Sprite Packer</span>
+        <span id="tabBadgePacker" class="font-mono text-[10px] px-1.5 py-0.2 rounded bg-black/25 text-white/90">12</span>
+      </button>
+      <button id="modeTab-slicer" onclick="switchWorkspaceMode('slicer')" class="seg-btn">
+        <i class="fa-solid fa-scissors text-[11px]"></i>
+        <span>2. Sheet Slicer</span>
+        <span id="tabBadgeSlicer" class="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white/5 text-slate-400">0</span>
+      </button>
+      <button id="modeTab-gif" onclick="switchWorkspaceMode('gif')" class="seg-btn">
+        <i class="fa-solid fa-film text-[11px]"></i>
+        <span>3. GIF Studio</span>
+        <span id="tabBadgeGif" class="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white/5 text-slate-400">12</span>
+      </button>
+    </div>
+
+    <!-- Right: Demo Presets & Contextual Primary Export CTAs -->
+    <div class="flex items-center gap-2">
+      <!-- Demo Preset Loader Pill -->
+      <div class="hidden lg:flex items-center bg-elevated border border-line rounded-lg p-0.5 gap-0.5">
+        <span class="text-[10px] font-semibold text-slate-400 px-2"><i class="fa-solid fa-wand-magic-sparkles text-indigo-400 mr-1"></i>Demo:</span>
+        <button onclick="loadDemoSprites('knight')" class="px-2 py-1 rounded-md text-[11px] font-medium text-slate-300 hover:text-white hover:bg-white/5 transition" title="Load 12 uniform animated character frames">Hero (12f)</button>
+        <button onclick="loadDemoSprites('dungeon')" class="px-2 py-1 rounded-md text-[11px] font-medium text-slate-300 hover:text-white hover:bg-white/5 transition" title="Load 18 variable-size RPG items">Loot (18)</button>
+        <button onclick="loadDemoSprites('stress')" class="px-2 py-1 rounded-md text-[11px] font-medium text-slate-300 hover:text-white hover:bg-white/5 transition" title="Generate 64 mixed-size sprites">64× Pack</button>
+      </div>
+
+      <!-- Contextual Primary CTA Buttons -->
+      <div id="headerActionsPacker" class="flex items-center gap-1.5">
+        <button onclick="openBottomDockTab('atlas')" class="h-8 px-3 rounded-lg bg-elevated hover:bg-elevatedHover text-slate-200 border border-line text-xs font-semibold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-code text-indigo-400 text-[11px]"></i>
+          <span class="hidden sm:inline">CSS / JSON</span>
+        </button>
+        <button onclick="downloadSpritesheetPNG()" class="h-8 px-3.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/25 border border-indigo-400/30">
+          <i class="fa-solid fa-download text-[11px]"></i>
+          <span>Export PNG</span>
+        </button>
+      </div>
+
+      <div id="headerActionsSlicer" class="hidden items-center gap-1.5">
+        <button onclick="sendSlicesToGifStudio()" class="h-8 px-3 rounded-lg bg-elevated hover:bg-elevatedHover text-fuchsia-300 border border-line text-xs font-semibold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-film text-[11px]"></i>
+          <span class="hidden sm:inline">Slices → GIF</span>
+        </button>
+        <button onclick="downloadSlicesAsZip()" class="h-8 px-3.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-md shadow-emerald-600/25 border border-emerald-400/30">
+          <i class="fa-solid fa-file-zipper text-[11px]"></i>
+          <span>Export .ZIP</span>
+        </button>
+      </div>
+
+      <div id="headerActionsGif" class="hidden items-center gap-1.5">
+        <button onclick="encodeAndDownloadGIF()" class="h-8 px-3.5 rounded-lg bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-md shadow-fuchsia-600/25 border border-fuchsia-400/30">
+          <i class="fa-solid fa-clapperboard text-[11px]"></i>
+          <span>Render .GIF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================= -->
+  <!-- MODE 1 WORKSPACE: SPRITE PACKER (290px Left | Flex Center | 330px Right) -->
+  <!-- ======================================================================= -->
+  <div id="workspace-packer" class="flex-1 flex overflow-hidden min-h-0">
+
+    <!-- LEFT DOCK (290px fixed): SPRITE INPUT & VIRTUALIZED LIST -->
+    <aside class="w-[290px] bg-panel border-r border-line flex flex-col shrink-0 min-h-0">
+      <!-- Dropzone Card -->
+      <div class="p-3 border-b border-line">
+        <input id="packerFileInput" type="file" multiple accept="image/png,image/webp,image/gif,image/svg+xml" class="hidden" onchange="handlePackerFilesSelect(event)" />
+        <div onclick="document.getElementById('packerFileInput').click()" class="cursor-pointer rounded-xl border border-dashed border-indigo-500/45 hover:border-indigo-400 bg-indigo-950/20 hover:bg-indigo-950/35 p-3 text-center transition group">
+          <div class="flex items-center justify-center gap-2 text-indigo-300 font-semibold text-xs mb-0.5">
+            <i class="fa-solid fa-plus-circle text-indigo-400 group-hover:scale-110 transition-transform"></i>
+            <span>Add Unlimited PNG Sprites</span>
+          </div>
+          <p class="text-[10.5px] text-slate-400">Drag &amp; drop files anywhere or click</p>
+        </div>
+      </div>
+
+      <!-- Search, Sort & Clear Bar -->
+      <div class="px-3 py-2 bg-panelHeader border-b border-line space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-layer-group text-indigo-400"></i>
+            <span>Sprites</span>
+            <span id="spriteCountBadge" class="val-badge">0</span>
+          </span>
+          <div class="flex items-center gap-1">
+            <button onclick="sortSpritesBy('name')" class="px-1.5 py-0.5 rounded bg-elevated hover:bg-elevatedHover text-[10px] text-slate-300 border border-line transition" title="Sort Alphabetically">A–Z</button>
+            <button onclick="sortSpritesBy('area')" class="px-1.5 py-0.5 rounded bg-elevated hover:bg-elevatedHover text-[10px] text-slate-300 border border-line transition" title="Sort by Pixel Area">Area</button>
+            <button onclick="clearAllSprites()" class="px-1.5 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/25 text-[10px] text-rose-300 border border-rose-500/25 transition" title="Remove All Sprites">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Input -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-500"></i>
+          <input id="spriteSearchInput" type="text" oninput="renderSpriteList()" placeholder="Filter sprites by name..." class="w-full h-7 bg-elevated border border-line rounded-lg pl-7 pr-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+        </div>
+      </div>
+
+      <!-- Scrollable Sprite List -->
+      <div id="spriteListContainer" class="flex-1 overflow-y-auto p-2 space-y-1 min-h-0"></div>
+    </aside>
+
+    <!-- CENTER WORKSPACE: FLOATING HUD + INTERACTIVE VIEWPORT + BOTTOM DOCK -->
+    <main class="flex-1 flex flex-col workspace-grid-bg overflow-hidden relative min-w-0 min-h-0">
+
+      <!-- Floating Top HUD Pill Bar -->
+      <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-panel/90 backdrop-blur-md border border-lineBright px-2.5 py-1.5 rounded-xl shadow-2xl">
+        <!-- Zoom Controls -->
+        <button onclick="adjustPackerZoom(-0.25)" class="w-6 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 hover:text-white flex items-center justify-center text-[11px] transition" title="Zoom Out">
+          <i class="fa-solid fa-minus"></i>
+        </button>
+        <span id="packerZoomBadge" class="font-mono text-[11px] font-semibold text-slate-200 w-12 text-center">100%</span>
+        <button onclick="adjustPackerZoom(0.25)" class="w-6 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 hover:text-white flex items-center justify-center text-[11px] transition" title="Zoom In">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+        <button onclick="fitPackerViewport()" class="px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 hover:text-white text-[11px] font-medium transition" title="Fit Sheet to Viewport">
+          Fit
+        </button>
+        <button onclick="setPackerZoom100()" class="px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 hover:text-white font-mono text-[10.5px] font-medium transition" title="1:1 Pixel-Perfect 100% Zoom">
+          1:1
+        </button>
+
+        <div class="h-4 w-[1px] bg-line mx-1"></div>
+
+        <!-- Overlay Toggles -->
+        <button id="hudBoundsBtn" onclick="togglePackerBoundsOverlay()" class="px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 text-[11px] font-medium flex items-center gap-1.5 transition" title="Toggle Sprite Bounding Boxes (Visual Only)">
+          <i class="fa-solid fa-vector-square text-[10px]"></i>
+          <span class="hidden md:inline">Bounds</span>
+        </button>
+        <button id="hudLabelsBtn" onclick="togglePackerLabelsOverlay()" class="px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 text-[11px] font-medium flex items-center gap-1.5 transition" title="Toggle Frame Index & Name Labels (Visual Only)">
+          <i class="fa-solid fa-tag text-[10px]"></i>
+          <span class="hidden md:inline">Labels</span>
+        </button>
+
+        <div class="h-4 w-[1px] bg-line mx-1"></div>
+
+        <!-- Visual Backdrop Swatches -->
+        <div class="flex items-center gap-1" title="Preview Backdrop (Never baked into exported PNG)">
+          <button onclick="setPackerBackdrop('backdrop-checker-dark')" class="w-5 h-5 rounded border border-indigo-400 backdrop-checker-dark" title="Dark Checkerboard"></button>
+          <button onclick="setPackerBackdrop('backdrop-checker-light')" class="w-5 h-5 rounded border border-slate-600 backdrop-checker-light" title="Light Checkerboard"></button>
+          <button onclick="setPackerBackdrop('backdrop-magenta')" class="w-5 h-5 rounded border border-slate-600 backdrop-magenta" title="High-Contrast Magenta (#FF00FF)"></button>
+          <button onclick="setPackerBackdrop('backdrop-green')" class="w-5 h-5 rounded border border-slate-600 backdrop-green" title="Chroma Green (#00FF00)"></button>
+          <button onclick="setPackerBackdrop('backdrop-slate')" class="w-5 h-5 rounded border border-slate-600 backdrop-slate" title="Deep Slate"></button>
+        </div>
+      </div>
+
+      <!-- Interactive Canvas Viewport -->
+      <div id="packerViewport" class="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center min-h-0">
+        <div id="packerStage" class="relative origin-center transition-none">
+          <div id="packerBackdropBox" class="backdrop-checker-dark relative rounded-sm shadow-2xl border border-slate-700/80">
+            <canvas id="packerCanvas" class="block pixelated"></canvas>
+          </div>
+        </div>
+
+        <!-- Floating Hover Telemetry Pill -->
+        <div id="packerHoverPill" class="hidden absolute bottom-3 left-3 z-20 pointer-events-none bg-panel/95 backdrop-blur-md border border-indigo-500/40 rounded-lg px-3 py-1.5 text-[11px] shadow-xl flex items-center gap-2.5">
+          <span id="hoverSpriteName" class="font-semibold text-indigo-300">hero_01</span>
+          <span id="hoverSpriteCoords" class="font-mono text-slate-300">x:0 y:0 (48×48)</span>
+          <span id="hoverSpriteTrim" class="font-mono text-[10px] text-emerald-400"></span>
+        </div>
+      </div>
+
+      <!-- COLLAPSIBLE DUAL-TAB BOTTOM DOCK (Animation Preview + Atlas/CSS Code Inspector) -->
+      <section id="packerBottomDock" class="h-[220px] bg-panel border-t border-line flex flex-col shrink-0 z-20 transition-all duration-150">
+        <!-- Dock Header Tabs -->
+        <div class="h-9 bg-panelHeader border-b border-line px-3 flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-1">
+            <button id="dockTabBtn-anim" onclick="openBottomDockTab('anim')" class="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-play text-[10px]"></i>
+              <span>Live Animation &amp; Onion Skin</span>
+            </button>
+            <button id="dockTabBtn-atlas" onclick="openBottomDockTab('atlas')" class="px-3 py-1 rounded-md text-xs font-semibold text-slate-400 hover:text-slate-200 border border-transparent flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-code text-[10px]"></i>
+              <span>Atlas &amp; CSS Code Inspector</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="hidden sm:flex items-center gap-3 text-[11px] text-slate-400 font-mono">
+              <span>Atlas: <strong id="statusDimText" class="text-slate-200">0×0 px</strong></span>
+              <span>•</span>
+              <span>Efficiency: <strong id="statusEffText" class="text-emerald-400">0%</strong></span>
+            </div>
+            <button onclick="togglePackerBottomDock()" class="w-6 h-6 rounded bg-elevated hover:bg-elevatedHover border border-line text-slate-400 hover:text-white flex items-center justify-center text-xs" title="Collapse / Expand Bottom Dock">
+              <i id="packerDockToggleIcon" class="fa-solid fa-chevron-down text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 1 CONTENT: LIVE ANIMATION PREVIEW & ONION SKINNING -->
+        <div id="dockContent-anim" class="flex-1 flex items-center gap-4 px-4 py-2.5 overflow-hidden min-h-0">
+          <!-- Preview Stage Box -->
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="w-32 h-32 rounded-xl backdrop-checker-dark border border-lineBright flex items-center justify-center relative overflow-hidden shadow-inner">
+              <canvas id="animPreviewCanvas" width="112" height="112" class="pixelated"></canvas>
+              <span id="animFrameCounter" class="absolute bottom-1 right-1.5 font-mono text-[10px] px-1.5 py-0.2 rounded bg-black/75 text-indigo-300 border border-white/10">1/12</span>
+            </div>
+
+            <!-- Transport & Onion Controls -->
+            <div class="space-y-2.5 w-48">
+              <div class="flex items-center gap-1">
+                <button onclick="stepPackerAnim(-1)" class="w-7 h-7 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 flex items-center justify-center text-xs" title="Previous Frame">
+                  <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button onclick="togglePackerAnimPlay()" class="flex-1 h-7 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition">
+                  <i id="packerAnimPlayIcon" class="fa-solid fa-pause text-[10px]"></i>
+                  <span id="packerAnimPlayLabel">Playing</span>
+                </button>
+                <button onclick="stepPackerAnim(1)" class="w-7 h-7 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 flex items-center justify-center text-xs" title="Next Frame">
+                  <i class="fa-solid fa-forward-step"></i>
+                </button>
+              </div>
+
+              <div class="space-y-1">
+                <div class="flex justify-between text-[11px]">
+                  <span class="text-slate-400">Playback Speed</span>
+                  <span id="packerAnimFpsBadge" class="val-badge">12 FPS</span>
+                </div>
+                <input id="packerAnimFpsRange" type="range" min="1" max="60" value="12" oninput="onPackerAnimFpsChange(this.value)" class="ui-range" />
+              </div>
+
+              <label class="flex items-center justify-between text-[11px] text-slate-300 cursor-pointer pt-0.5">
+                <span>Onion Skin (Ghost Prev)</span>
+                <span class="ui-switch">
+                  <input id="onionSkinToggle" type="checkbox" onchange="state.onionSkin = this.checked" />
+                  <span class="ui-switch-track"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="h-full w-[1px] bg-line shrink-0"></div>
+
+          <!-- Interactive Horizontal Filmstrip -->
+          <div class="flex-1 flex flex-col min-w-0 h-full justify-center">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-semibold text-slate-400">Animation Sequence Filmstrip (Click any frame to inspect)</span>
+              <button onclick="switchWorkspaceMode('gif')" class="text-[11px] text-fuchsia-400 hover:text-fuchsia-300 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-film"></i> Open in GIF Studio →
+              </button>
+            </div>
+            <div id="packerFilmstrip" class="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2 CONTENT: ATLAS & UPGRADED CSS CODE INSPECTOR -->
+        <div id="dockContent-atlas" class="hidden flex-1 flex flex-col overflow-hidden min-h-0">
+          <div class="px-3 py-1.5 bg-elevated/60 border-b border-line flex items-center justify-between gap-2 shrink-0">
+            <div class="flex items-center gap-1">
+              <button id="atlasFmtBtn-css" onclick="setAtlasInspectorFormat('css')" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-600 text-white transition">
+                <i class="fa-brands fa-css3-alt mr-1"></i>Modern CSS + @keyframes
+              </button>
+              <button id="atlasFmtBtn-json-hash" onclick="setAtlasInspectorFormat('json-hash')" class="px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                JSON Hash (Phaser / Pixi)
+              </button>
+              <button id="atlasFmtBtn-json-array" onclick="setAtlasInspectorFormat('json-array')" class="px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                JSON Array
+              </button>
+              <button id="atlasFmtBtn-xml" onclick="setAtlasInspectorFormat('xml')" class="px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition">
+                XML TextureAtlas
+              </button>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="copyAtlasInspectorCode()" class="px-2.5 py-1 rounded-md bg-elevated hover:bg-elevatedHover border border-line text-[11px] font-medium text-slate-200 flex items-center gap-1.5 transition">
+                <i class="fa-regular fa-copy text-indigo-400"></i> Copy Code
+              </button>
+              <button onclick="downloadAtlasInspectorFile()" class="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-[11px] font-semibold text-white flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-download"></i> Download File
+              </button>
+            </div>
+          </div>
+
+          <textarea id="atlasCodeTextarea" readonly class="flex-1 w-full bg-[#0b0d13] text-indigo-100 font-mono text-[11.5px] leading-relaxed p-3 focus:outline-none resize-none select-all"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT INSPECTOR SIDEBAR (330px fixed): PACKER SETTINGS & TELEMETRY -->
+    <aside class="w-[330px] bg-panel border-l border-line flex flex-col shrink-0 overflow-y-auto min-h-0">
+      <!-- Live Telemetry Summary Cards -->
+      <div class="insp-section bg-panelHeader">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-gauge-high text-indigo-400 mr-1.5"></i>Atlas Telemetry</span>
+          <span class="font-mono text-[10px] text-emerald-400">32-Bit RGBA</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-elevated border border-line rounded-lg p-2">
+            <div class="text-[10px] text-slate-400">Dimensions</div>
+            <div id="teleDim" class="font-mono text-xs font-semibold text-white mt-0.5">0×0</div>
+          </div>
+          <div class="bg-elevated border border-line rounded-lg p-2">
+            <div class="text-[10px] text-slate-400">Efficiency</div>
+            <div id="teleEff" class="font-mono text-xs font-semibold text-emerald-400 mt-0.5">0%</div>
+          </div>
+          <div class="bg-elevated border border-line rounded-lg p-2">
+            <div class="text-[10px] text-slate-400">Trim Saved</div>
+            <div id="teleTrimSaved" class="font-mono text-xs font-semibold text-indigo-300 mt-0.5">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. Layout & Packing Algorithm -->
+      <div class="insp-section space-y-3">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-Brain text-indigo-400 mr-1.5"></i>Packing Algorithm</span>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] text-slate-300 font-medium">Layout Mode</label>
+          <select id="packAlgoSelect" onchange="onPackerConfigChange()" class="ui-select w-full">
+            <option value="maxrects" selected>MaxRects Bin Packing (Optimal Area)</option>
+            <option value="grid">Grid / Fixed Columns (Uniform / Rows)</option>
+            <option value="horizontal">Horizontal Strip (1 Row CSS Steps)</option>
+            <option value="vertical">Vertical Strip (1 Column)</option>
+          </select>
+        </div>
+
+        <!-- MaxRects Heuristic Sub-Controls -->
+        <div id="maxRectsSubPanel" class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Heuristic Rule</label>
+            <select id="packHeuristicSelect" onchange="onPackerConfigChange()" class="ui-select w-full">
+              <option value="auto" selected>Auto Best Fit</option>
+              <option value="bssf">Short Side (BSSF)</option>
+              <option value="blsf">Long Side (BLSF)</option>
+              <option value="baf">Best Area (BAF)</option>
+              <option value="bl">Bottom-Left (BL)</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Pack Sort Order</label>
+            <select id="packSortSelect" onchange="onPackerConfigChange()" class="ui-select w-full">
+              <option value="maxside" selected>Max Side Desc</option>
+              <option value="area">Area Desc</option>
+              <option value="height">Height Desc</option>
+              <option value="none">Keep List Order</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Grid Columns Sub-Controls -->
+        <div id="gridSubPanel" class="hidden space-y-2.5 pt-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] text-slate-300">Grid Columns</span>
+            <div class="num-field w-24">
+              <input id="gridColsInput" type="number" min="1" max="128" value="4" oninput="onPackerConfigChange()" />
+              <span class="unit">cols</span>
+            </div>
+          </div>
+          <label class="flex items-center justify-between text-[11px] text-slate-300 cursor-pointer">
+            <span>Uniform Cell Size (Max W×H)</span>
+            <span class="ui-switch">
+              <input id="gridUniformToggle" type="checkbox" checked onchange="onPackerConfigChange()" />
+              <span class="ui-switch-track"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 2. Spacing, Margin, Extrude & Transparency Trimming -->
+      <div class="insp-section space-y-3">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-ruler-combined text-indigo-400 mr-1.5"></i>Spacing, Padding &amp; Trim</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400" title="Pixel gap between adjacent sprites">Spacing</label>
+            <div class="num-field">
+              <input id="packSpacingInput" type="number" min="0" max="256" value="2" oninput="onPackerConfigChange()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400" title="Outer border padding around the entire sheet">Margin</label>
+            <div class="num-field">
+              <input id="packMarginInput" type="number" min="0" max="256" value="2" oninput="onPackerConfigChange()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400" title="Repeats edge pixels outward to prevent UV seam bleeding in 3D/2D engines">Extrude</label>
+            <div class="num-field">
+              <input id="packExtrudeInput" type="number" min="0" max="16" value="0" oninput="onPackerConfigChange()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trim Transparency Card -->
+        <div class="p-2.5 rounded-xl bg-elevated border border-line space-y-2.5">
+          <label class="flex items-center justify-between cursor-pointer">
+            <div>
+              <div class="text-xs font-semibold text-slate-200">Trim Transparent Borders</div>
+              <div class="text-[10px] text-slate-400">Crops empty alpha &amp; records offsets</div>
+            </div>
+            <span class="ui-switch">
+              <input id="packTrimToggle" type="checkbox" onchange="onPackerConfigChange()" />
+              <span class="ui-switch-track"></span>
+            </span>
+          </label>
+
+          <div id="trimThresholdBox" class="hidden space-y-1 pt-1 border-t border-line">
+            <div class="flex justify-between text-[10.5px]">
+              <span class="text-slate-400">Alpha Trim Threshold</span>
+              <span id="trimThreshBadge" class="val-badge">1 / 255</span>
+            </div>
+            <input id="trimThreshRange" type="range" min="1" max="254" value="1" oninput="document.getElementById('trimThreshBadge').textContent = this.value + ' / 255'; onPackerConfigChange();" class="ui-range" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Texture Dimension Constraints -->
+      <div class="insp-section space-y-2.5">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-expand text-indigo-400 mr-1.5"></i>Texture Constraints</span>
+        </div>
+
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+          <span>Power-of-Two (POT: 128, 256, 512…)</span>
+          <span class="ui-switch">
+            <input id="packPotToggle" type="checkbox" onchange="onPackerConfigChange()" />
+            <span class="ui-switch-track"></span>
+          </span>
+        </label>
+
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+          <span>Force Square Texture (W = H)</span>
+          <span class="ui-switch">
+            <input id="packSquareToggle" type="checkbox" onchange="onPackerConfigChange()" />
+            <span class="ui-switch-track"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- 4. Export & Cross-Mode Workflow Actions -->
+      <div class="p-4 space-y-2.5">
+        <button onclick="downloadSpritesheetPNG()" class="w-full h-9 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/25 border border-indigo-400/30 flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-download"></i>
+          <span>Download Transparent PNG</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="sendPackedSheetToSlicer(true)" class="h-8 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-emerald-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-scissors"></i>
+            <span>Slice This Sheet</span>
+          </button>
+          <button onclick="openGifFromPacker()" class="h-8 rounded-lg bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/35 text-fuchsia-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-film"></i>
+            <span>Make .GIF</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODE 2 WORKSPACE: SHEET SLICER / UNPACKER (290px | Center | 330px)      -->
+  <!-- ======================================================================= -->
+  <div id="workspace-slicer" class="flex-1 hidden overflow-hidden min-h-0">
+
+    <!-- LEFT DOCK (290px): SOURCE SHEET & EXTRACTED SLICES LIST -->
+    <aside class="w-[290px] bg-panel border-r border-line flex flex-col shrink-0 min-h-0">
+      <div class="p-3 border-b border-line space-y-2">
+        <input id="slicerFileInput" type="file" accept="image/png,image/webp,image/gif,image/jpeg" class="hidden" onchange="handleSlicerFileSelect(event)" />
+        <div onclick="document.getElementById('slicerFileInput').click()" class="cursor-pointer rounded-xl border border-dashed border-emerald-500/45 hover:border-emerald-400 bg-emerald-950/20 hover:bg-emerald-950/35 p-3 text-center transition group">
+          <div class="flex items-center justify-center gap-2 text-emerald-300 font-semibold text-xs mb-0.5">
+            <i class="fa-solid fa-file-arrow-up text-emerald-400 group-hover:scale-110 transition-transform"></i>
+            <span>Load Spritesheet PNG</span>
+          </div>
+          <p class="text-[10.5px] text-slate-400">Reverse-unpack any sheet into PNGs</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-1.5">
+          <button onclick="sendPackedSheetToSlicer(true)" class="h-7 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-[11px] text-indigo-300 font-medium flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-arrow-right-to-bracket text-[10px]"></i>
+            <span>Use Packed Sheet</span>
+          </button>
+          <button onclick="loadDemoSlicerSheet()" class="h-7 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-[11px] text-emerald-300 font-medium flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+            <span>Demo Sheet</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Prefix & Slice Selection Controls -->
+      <div class="px-3 py-2 bg-panelHeader border-b border-line space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-scissors text-emerald-400"></i>
+            <span>Slices</span>
+            <span id="sliceCountBadge" class="val-badge">0</span>
+          </span>
+          <div class="flex items-center gap-1">
+            <button onclick="toggleAllSlices(true)" class="px-1.5 py-0.5 rounded bg-elevated hover:bg-elevatedHover text-[10px] text-slate-300 border border-line">All</button>
+            <button onclick="toggleAllSlices(false)" class="px-1.5 py-0.5 rounded bg-elevated hover:bg-elevatedHover text-[10px] text-slate-300 border border-line">None</button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <span class="text-[10.5px] text-slate-400 font-mono">Prefix:</span>
+          <input id="slicePrefixInput" type="text" value="slice" oninput="renameAllSlices()" class="flex-1 h-7 bg-elevated border border-line rounded-lg px-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-500" />
+        </div>
+      </div>
+
+      <!-- Extracted Slices Vertical List -->
+      <div id="sliceListContainer" class="flex-1 overflow-y-auto p-2 space-y-1 min-h-0"></div>
+    </aside>
+
+    <!-- CENTER WORKSPACE: SLICER VIEWPORT + BOTTOM EXTRACTED GALLERY DOCK -->
+    <main class="flex-1 flex flex-col workspace-grid-bg overflow-hidden relative min-w-0 min-h-0">
+      <!-- Floating Top HUD Pill Bar -->
+      <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-panel/90 backdrop-blur-md border border-lineBright px-2.5 py-1.5 rounded-xl shadow-2xl">
+        <button onclick="adjustSlicerZoom(-0.25)" class="w-6 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 flex items-center justify-center text-[11px]"><i class="fa-solid fa-minus"></i></button>
+        <span id="slicerZoomBadge" class="font-mono text-[11px] font-semibold text-slate-200 w-12 text-center">100%</span>
+        <button onclick="adjustSlicerZoom(0.25)" class="w-6 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 flex items-center justify-center text-[11px]"><i class="fa-solid fa-plus"></i></button>
+        <button onclick="fitSlicerToViewport()" class="px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 text-[11px] font-medium">Fit</button>
+        <div class="h-4 w-[1px] bg-line mx-1"></div>
+        <button onclick="toggleSlicerBoxes()" class="px-2.5 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[11px] font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-vector-square text-[10px]"></i>
+          <span>Slice Regions</span>
+        </button>
+        <span class="text-[11px] text-slate-400 hidden md:inline pl-1">Click any box on canvas to toggle</span>
+      </div>
+
+      <!-- Slicer Canvas Viewport -->
+      <div id="slicerViewport" class="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing flex items-center justify-center min-h-0">
+        <div id="slicerStage" class="relative origin-center transition-none">
+          <div class="backdrop-checker-dark relative rounded-sm shadow-2xl border border-slate-700/80">
+            <canvas id="slicerCanvas" class="block pixelated"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Extracted Slices Horizontal Gallery Dock -->
+      <section class="h-[185px] bg-panel border-t border-line flex flex-col shrink-0 z-20">
+        <div class="h-8 bg-panelHeader border-b border-line px-3.5 flex items-center justify-between text-xs shrink-0">
+          <span class="font-semibold text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-grip text-emerald-400"></i>
+            <span>Extracted Sprite Gallery</span>
+          </span>
+          <div class="flex items-center gap-3 font-mono text-[11px] text-slate-400">
+            <span>Sheet: <strong id="slicerStatDim" class="text-white">0×0 px</strong></span>
+            <span>•</span>
+            <span>Selected: <strong id="slicerStatCount" class="text-emerald-400">0 / 0</strong></span>
+          </div>
+        </div>
+        <div id="slicerGalleryStrip" class="flex-1 flex items-center gap-2.5 px-4 overflow-x-auto min-h-0"></div>
+      </section>
+    </main>
+
+    <!-- RIGHT INSPECTOR SIDEBAR (330px): SLICER ALGORITHMS & BATCH EXPORT -->
+    <aside class="w-[330px] bg-panel border-l border-line flex flex-col shrink-0 overflow-y-auto min-h-0">
+      <div class="insp-section space-y-3">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-wand-magic-sparkles text-emerald-400 mr-1.5"></i>Detection Method</span>
+        </div>
+
+        <div class="seg-group">
+          <button id="sliceMethodBtn-islands" onclick="setSlicerMethod('islands')" class="seg-btn active-emerald">Auto Islands</button>
+          <button id="sliceMethodBtn-grid" onclick="setSlicerMethod('grid')" class="seg-btn">Grid Cells</button>
+          <button id="sliceMethodBtn-atlas" onclick="setSlicerMethod('atlas')" class="seg-btn">Atlas Data</button>
+        </div>
+      </div>
+
+      <!-- SLICER PANEL A: AUTO ISLANDS (FLOOD-FILL) -->
+      <div id="slicerPanel-islands" class="insp-section space-y-3.5">
+        <div class="p-2.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 text-[11px] text-emerald-200 leading-relaxed">
+          Scans pixel alpha channels to automatically isolate sprites of any size or layout.
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-300">Merge Nearby Pixels</span>
+            <span id="islandMergeLabel" class="val-badge">2 px</span>
+          </div>
+          <input id="islandMergeRange" type="range" min="0" max="16" value="2" oninput="document.getElementById('islandMergeLabel').textContent=this.value+' px'; runSlicer();" class="ui-range" />
+          <p class="text-[10px] text-slate-400">Groups detached sub-parts within N pixels</p>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-300">Minimum Sprite Area</span>
+            <span id="islandMinAreaLabel" class="val-badge">16 px²</span>
+          </div>
+          <input id="islandMinAreaRange" type="range" min="1" max="400" value="16" oninput="document.getElementById('islandMinAreaLabel').textContent=this.value+' px²'; runSlicer();" class="ui-range" />
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-300">Alpha Detection Threshold</span>
+            <span id="islandAlphaLabel" class="val-badge">5 / 255</span>
+          </div>
+          <input id="islandAlphaRange" type="range" min="1" max="250" value="5" oninput="document.getElementById('islandAlphaLabel').textContent=this.value+' / 255'; runSlicer();" class="ui-range" />
+        </div>
+      </div>
+
+      <!-- SLICER PANEL B: UNIFORM GRID CELLS -->
+      <div id="slicerPanel-grid" class="hidden insp-section space-y-3">
+        <div class="space-y-1">
+          <label class="text-[11px] text-slate-300">Grid Division Mode</label>
+          <select id="slicerGridType" onchange="runSlicer()" class="ui-select w-full">
+            <option value="size">By Cell Size (W × H px)</option>
+            <option value="cr">By Columns × Rows Count</option>
+          </select>
+        </div>
+
+        <div id="slicerGridSizeInputs" class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Cell Width</label>
+            <div class="num-field">
+              <input id="sliceCellW" type="number" min="1" max="4096" value="48" oninput="runSlicer()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Cell Height</label>
+            <div class="num-field">
+              <input id="sliceCellH" type="number" min="1" max="4096" value="48" oninput="runSlicer()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="slicerGridCRInputs" class="hidden grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Columns</label>
+            <div class="num-field">
+              <input id="sliceCols" type="number" min="1" max="256" value="4" oninput="runSlicer()" />
+              <span class="unit">cols</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Rows</label>
+            <div class="num-field">
+              <input id="sliceRows" type="number" min="1" max="256" value="3" oninput="runSlicer()" />
+              <span class="unit">rows</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Outer Margin</label>
+            <div class="num-field">
+              <input id="sliceMargin" type="number" min="0" max="512" value="2" oninput="runSlicer()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Cell Spacing</label>
+            <div class="num-field">
+              <input id="sliceSpacing" type="number" min="0" max="512" value="2" oninput="runSlicer()" />
+              <span class="unit">px</span>
+            </div>
+          </div>
+        </div>
+
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer pt-1">
+          <span>Skip 100% Empty Transparent Cells</span>
+          <span class="ui-switch ui-switch-emerald">
+            <input id="sliceSkipEmpty" type="checkbox" checked onchange="runSlicer()" />
+            <span class="ui-switch-track"></span>
+          </span>
+        </label>
+
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+          <span>Tightly Trim Sliced Borders</span>
+          <span class="ui-switch ui-switch-emerald">
+            <input id="sliceTrimOutput" type="checkbox" onchange="runSlicer()" />
+            <span class="ui-switch-track"></span>
+          </span>
+        </label>
+      </div>
+
+      <!-- SLICER PANEL C: ATLAS METADATA -->
+      <div id="slicerPanel-atlas" class="hidden insp-section space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-slate-300 font-medium">Paste JSON or XML Atlas</span>
+          <button onclick="loadCurrentPackerAtlasIntoSlicer(true)" class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30">
+            Load Packer JSON
+          </button>
+        </div>
+        <textarea id="slicerAtlasInput" rows="6" oninput="runSlicer()" placeholder="Paste JSON Hash, JSON Array, or XML SubTexture coordinates..." class="w-full bg-elevated border border-line rounded-xl p-2.5 font-mono text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+      </div>
+
+      <!-- SLICER BATCH EXPORT ACTIONS -->
+      <div class="p-4 space-y-2.5">
+        <button onclick="downloadSlicesAsZip()" class="w-full h-9 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/25 border border-emerald-400/30 flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-file-zipper"></i>
+          <span>Download All Slices (.ZIP)</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="sendSlicesToPacker(true)" class="h-8 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/35 text-indigo-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-table-cells"></i>
+            <span>Send to Packer</span>
+          </button>
+          <button onclick="sendSlicesToGifStudio()" class="h-8 rounded-lg bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border border-fuchsia-500/35 text-fuchsia-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-film"></i>
+            <span>Slices → .GIF</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODE 3 WORKSPACE: ANIMATED GIF89a STUDIO (290px | Center | 330px)       -->
+  <!-- ======================================================================= -->
+  <div id="workspace-gif" class="flex-1 hidden overflow-hidden min-h-0">
+
+    <!-- LEFT DOCK (290px): FRAME SEQUENCE MANAGER -->
+    <aside class="w-[290px] bg-panel border-r border-line flex flex-col shrink-0 min-h-0">
+      <div class="p-3 border-b border-line space-y-2">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Import Frames From</div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button onclick="syncGifFramesFromPacker(true)" class="h-8 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/35 text-[11px] text-indigo-200 font-semibold flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-table-cells text-indigo-400"></i>
+            <span>Packer Sprites</span>
+          </button>
+          <button onclick="syncGifFramesFromSlicer()" class="h-8 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-[11px] text-emerald-200 font-semibold flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-scissors text-emerald-400"></i>
+            <span>Sliced Sheet</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 bg-panelHeader border-b border-line flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+          <i class="fa-solid fa-list-ol text-fuchsia-400"></i>
+          <span>Frames</span>
+          <span id="gifFrameCountBadge" class="val-badge">0</span>
+        </span>
+        <div class="flex items-center gap-1">
+          <button onclick="toggleAllGifFrames(true)" class="px-1.5 py-0.5 rounded bg-elevated hover:bg-elevatedHover text-[10px] text-slate-300 border border-line">All</button>
+          <button onclick="reverseGifTimeline()" class="px-1.5 py-0.5 rounded bg-elevated hover:bg-elevatedHover text-[10px] text-slate-300 border border-line" title="Reverse Frame Order">
+            <i class="fa-solid fa-arrow-right-arrow-left mr-0.5"></i>Rev
+          </button>
+        </div>
+      </div>
+
+      <div id="gifTimelineList" class="flex-1 overflow-y-auto p-2 space-y-1 min-h-0"></div>
+    </aside>
+
+    <!-- CENTER WORKSPACE: LIVE GIF STAGE & BOTTOM TIMELINE FILMSTRIP -->
+    <main class="flex-1 flex flex-col workspace-grid-bg overflow-hidden relative min-w-0 min-h-0">
+      <!-- Floating Top HUD Pill Bar -->
+      <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-panel/90 backdrop-blur-md border border-lineBright px-3 py-1.5 rounded-xl shadow-2xl">
+        <button onclick="toggleGifPreviewPlay()" class="px-3 h-6 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+          <i id="gifStagePlayIcon" class="fa-solid fa-pause text-[10px]"></i>
+          <span id="gifStagePlayText">Playing</span>
+        </button>
+        <span id="gifStageFrameReadout" class="font-mono text-xs text-slate-300 bg-elevated px-2.5 py-0.5 rounded-md border border-line">Frame 1 / 12</span>
+        <div class="h-4 w-[1px] bg-line"></div>
+        <span class="text-xs text-slate-400">Canvas: <strong id="gifOutputDimReadout" class="font-mono text-white">96×96 px</strong></span>
+      </div>
+
+      <!-- Center Live Preview Stage -->
+      <div class="flex-1 flex flex-col items-center justify-center p-6 overflow-auto relative min-h-0">
+        <div class="backdrop-checker-dark p-6 rounded-2xl border border-slate-700/80 shadow-2xl flex items-center justify-center">
+          <canvas id="gifStageCanvas" width="192" height="192" class="block pixelated rounded"></canvas>
+        </div>
+
+        <!-- Encoded GIF Ready Banner -->
+        <div id="gifEncodedResultBanner" class="mt-4 hidden items-center gap-3 px-4 py-2 rounded-xl bg-fuchsia-950/60 border border-fuchsia-500/40 text-xs text-fuchsia-100 shadow-xl">
+          <i class="fa-solid fa-circle-check text-emerald-400"></i>
+          <span id="gifEncodedSummary" class="font-mono">Encoded 12 frames (18.4 KB)</span>
+          <a id="gifDirectDownloadLink" href="#" download="animation.gif" class="px-2.5 py-1 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-semibold">Download Again</a>
+        </div>
+      </div>
+
+      <!-- Bottom Visual Timeline Filmstrip with Per-Frame Delay (ms) -->
+      <section class="h-[190px] bg-panel border-t border-line flex flex-col shrink-0 z-20">
+        <div class="h-8 bg-panelHeader border-b border-line px-3.5 flex items-center justify-between text-xs shrink-0">
+          <span class="font-semibold text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-film text-fuchsia-400"></i>
+            <span>Timeline Filmstrip &amp; Per-Frame Delay Overrides (ms)</span>
+          </span>
+          <span id="gifTotalDurationReadout" class="font-mono text-[11px] text-fuchsia-300">Total Loop: 1.00s</span>
+        </div>
+        <div id="gifFilmstripContainer" class="flex-1 flex items-center gap-2.5 px-4 overflow-x-auto min-h-0"></div>
+      </section>
+    </main>
+
+    <!-- RIGHT INSPECTOR SIDEBAR (330px): GIF89a ENCODER SETTINGS -->
+    <aside class="w-[330px] bg-panel border-l border-line flex flex-col shrink-0 overflow-y-auto min-h-0">
+      <div class="insp-section space-y-3">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-clock text-fuchsia-400 mr-1.5"></i>Timing &amp; Loop Mode</span>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-300 font-medium">Global Frame Rate</span>
+            <span id="gifFpsLabel" class="val-badge">12 FPS (83 ms)</span>
+          </div>
+          <input id="gifFpsRange" type="range" min="1" max="50" value="12" oninput="onGifFpsChange(this.value)" class="ui-range" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] text-slate-300">Loop Direction</label>
+          <select id="gifLoopDirection" onchange="updateGifPreviewMetrics()" class="ui-select w-full">
+            <option value="normal">Forward Loop (1 → N)</option>
+            <option value="pingpong">Ping-Pong Boomerang (1 ↔ N)</option>
+            <option value="reverse">Reverse Loop (N → 1)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="insp-section space-y-3">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-up-right-and-down-left-from-center text-fuchsia-400 mr-1.5"></i>Pixel-Art Upscale &amp; Framing</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Crisp Scale</label>
+            <select id="gifScaleSelect" onchange="updateGifPreviewMetrics()" class="ui-select w-full">
+              <option value="1">1× (Original)</option>
+              <option value="2" selected>2× Nearest</option>
+              <option value="3">3× Nearest</option>
+              <option value="4">4× Nearest</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10.5px] text-slate-400">Frame Anchor</label>
+            <select id="gifAlignSelect" onchange="updateGifPreviewMetrics()" class="ui-select w-full">
+              <option value="center" selected>Center</option>
+              <option value="bottom">Bottom-Center</option>
+              <option value="topleft">Top-Left</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-300">Outer Canvas Padding</span>
+            <span id="gifPadLabel" class="val-badge">4 px</span>
+          </div>
+          <input id="gifPadRange" type="range" min="0" max="32" value="4" oninput="document.getElementById('gifPadLabel').textContent=this.value+' px'; updateGifPreviewMetrics();" class="ui-range" />
+        </div>
+      </div>
+
+      <div class="insp-section space-y-3">
+        <div class="insp-title">
+          <span><i class="fa-solid fa-palette text-fuchsia-400 mr-1.5"></i>Background &amp; Transparency</span>
+        </div>
+
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+          <div>
+            <div class="font-semibold text-slate-200">Transparent GIF89a</div>
+            <div class="text-[10px] text-slate-400">Uses dedicated alpha index 255</div>
+          </div>
+          <span class="ui-switch ui-switch-fuchsia">
+            <input id="gifTransparentToggle" type="checkbox" checked onchange="updateGifPreviewMetrics()" />
+            <span class="ui-switch-track"></span>
+          </span>
+        </label>
+
+        <div id="gifBgColorBox" class="hidden flex items-center justify-between p-2 rounded-lg bg-elevated border border-line">
+          <span class="text-xs text-slate-300">Solid Matte Color</span>
+          <input id="gifBgColorPicker" type="color" value="#181c28" onchange="updateGifPreviewMetrics()" class="w-8 h-6 rounded cursor-pointer bg-transparent border-0" />
+        </div>
+      </div>
+
+      <div class="p-4 space-y-2.5">
+        <button onclick="encodeAndDownloadGIF()" class="w-full h-10 rounded-xl bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-fuchsia-600/25 border border-fuchsia-400/30 flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Render &amp; Download Animated .GIF</span>
+        </button>
+        <p class="text-[10px] text-slate-400 text-center">Pure-JS GIF89a LZW encoder • Zero external servers</p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- CORE APPLICATION JAVASCRIPT ENGINE                                      -->
+  <!-- ======================================================================= -->
+  <script>
+    /***************************************************************************
+     * 1. CENTRAL APPLICATION STATE
+     ***************************************************************************/
+    const state = {
+      workspaceMode: 'packer', // 'packer' | 'slicer' | 'gif'
+
+      // Mode 1: Packer State
+      sprites: [], // { id, name, filename, img, width, height, trimBounds, packed: {x, y, w, h} }
+      nextId: 1,
+      selectedSpriteId: null,
+      algorithm: 'maxrects',
+      heuristic: 'auto',
+      sortOrder: 'maxside',
+      gridCols: 4,
+      gridUniform: true,
+      spacing: 2,
+      margin: 2,
+      extrude: 0,
+      trim: false,
+      trimThreshold: 1,
+      powerOfTwo: false,
+      forceSquare: false,
+      sheetWidth: 1,
+      sheetHeight: 1,
+      efficiency: 0,
+      trimmedPixelsSavedPct: 0,
+
+      // Packer Viewport & Overlays
+      packerZoom: 1,
+      packerPanX: 0,
+      packerPanY: 0,
+      showBoundsOverlay: false,
+      showLabelsOverlay: false,
+      dockTab: 'anim', // 'anim' | 'atlas'
+      dockCollapsed: false,
+      atlasFormat: 'css', // 'css' | 'json-hash' | 'json-array' | 'xml'
+
+      // Packer Animation Preview
+      animPlaying: true,
+      animFps: 12,
+      animFrameIndex: 0,
+      onionSkin: false,
+
+      // Mode 2: Slicer State
+      slicerImg: null,
+      slicerWidth: 1,
+      slicerHeight: 1,
+      slicerMethod: 'islands', // 'islands' | 'grid' | 'atlas'
+      slices: [],              // { id, name, x, y, w, h, selected, canvas }
+      slicerZoom: 1,
+      slicerPanX: 0,
+      slicerPanY: 0,
+      slicerShowBoxes: true,
+
+      // Mode 3: GIF Studio State
+      gifFrames: [],           // { id, name, img, width, height, enabled, delayMs }
+      gifPlaying: true,
+      gifFps: 12,
+      gifCurrentFrameIdx: 0
+    };
+
+    // Dedicated Off-Screen Export Canvas: ONLY receives pure 32-bit RGBA sprite pixels (never overlays or checkerboards)
+    const exportCanvas = document.createElement('canvas');
+    const exportCtx = exportCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Interactive Viewport Canvases
+    const packerCanvas = document.getElementById('packerCanvas');
+    const packerCtx = packerCanvas.getContext('2d');
+    const animCanvas = document.getElementById('animPreviewCanvas');
+    const animCtx = animCanvas.getContext('2d');
+
+    /***************************************************************************
+     * 2. TOAST NOTIFICATIONS & UTILITIES
+     ***************************************************************************/
+    function showToast(message, type = 'info') {
+      const stack = document.getElementById('toastStack');
+      const el = document.createElement('div');
+      const palette = {
+        info: 'border-indigo-500/40 bg-panel/95 text-indigo-200',
+        success: 'border-emerald-500/40 bg-panel/95 text-emerald-200',
+        warn: 'border-amber-500/40 bg-panel/95 text-amber-200'
+      };
+      const icons = {
+        info: 'fa-circle-info text-indigo-400',
+        success: 'fa-circle-check text-emerald-400',
+        warn: 'fa-triangle-exclamation text-amber-400'
+      };
+      el.className = `pointer-events-auto flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border shadow-2xl backdrop-blur-md text-xs font-medium transition-all duration-200 ${palette[type] || palette.info}`;
+      el.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${message}</span>`;
+      stack.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(6px)';
+        setTimeout(() => el.remove(), 220);
+      }, 2800);
+    }
+
+    function getBaseSheetName() {
+      const val = (document.getElementById('sheetNameInput').value || 'spritesheet').trim();
+      return val.replace(/[^a-zA-Z0-9_-]/g, '_') || 'spritesheet';
+    }
+
+    function onSheetNameChange() {
+      if (state.dockTab === 'atlas') updateAtlasInspectorCode();
+    }
+
+    function nextPowerOfTwo(n) {
+      let p = 1;
+      while (p < n) p <<= 1;
+      return Math.max(1, p);
+    }
+
+    function updateHeaderBadges() {
+      document.getElementById('tabBadgePacker').textContent = state.sprites.length;
+      document.getElementById('tabBadgeSlicer').textContent = state.slices.filter(s => s.selected).length;
+      document.getElementById('tabBadgeGif').textContent = state.gifFrames.filter(f => f.enabled).length;
+    }
+
+    /***************************************************************************
+     * 3. TRANSPARENCY TRIMMING ENGINE (32-BIT ALPHA SCANNER)
+     ***************************************************************************/
+    const scanCanvas = document.createElement('canvas');
+    const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+
+    function computeTrimBounds(imgSource, alphaThreshold = 1) {
+      const w = imgSource.naturalWidth || imgSource.width || 1;
+      const h = imgSource.naturalHeight || imgSource.height || 1;
+      scanCanvas.width = w;
+      scanCanvas.height = h;
+      scanCtx.clearRect(0, 0, w, h);
+      scanCtx.drawImage(imgSource, 0, 0);
+
+      const data = scanCtx.getImageData(0, 0, w, h).data;
+      let minX = w, minY = h, maxX = -1, maxY = -1;
+
+      for (let y = 0; y < h; y++) {
+        const rowOffset = y * w * 4;
+        for (let x = 0; x < w; x++) {
+          const alpha = data[rowOffset + x * 4 + 3];
+          if (alpha >= alphaThreshold) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      if (maxX === -1 || maxY === -1) {
+        return { trimmed: false, x: 0, y: 0, w, h, sourceW: w, sourceH: h };
+      }
+
+      const trimW = maxX - minX + 1;
+      const trimH = maxY - minY + 1;
+      const isTrimmed = minX > 0 || minY > 0 || trimW < w || trimH < h;
+
+      return {
+        trimmed: isTrimmed,
+        x: minX,
+        y: minY,
+        w: trimW,
+        h: trimH,
+        sourceW: w,
+        sourceH: h
+      };
+    }
+
+    /***************************************************************************
+     * 4. BUILT-IN PROCEDURAL PIXEL-ART DEMO SETS
+     ***************************************************************************/
+    function loadDemoSprites(presetName) {
+      state.sprites = [];
+      state.selectedSpriteId = null;
+
+      if (presetName === 'knight') {
+        document.getElementById('sheetNameInput').value = 'hero_knight';
+        for (let f = 0; f < 12; f++) {
+          const c = document.createElement('canvas');
+          c.width = 48;
+          c.height = 48;
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingEnabled = false;
+
+          const bob = Math.round(Math.sin((f / 12) * Math.PI * 2) * 2);
+          const stride = Math.round(Math.cos((f / 12) * Math.PI * 2) * 4);
+          const swing = f >= 6 ? (f - 6) * 14 : 0;
+
+          // Ground shadow
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+          ctx.fillRect(14, 41, 20, 3);
+
+          // Cape
+          ctx.fillStyle = '#e11d48';
+          ctx.fillRect(12, 19 + bob, 9, 15);
+
+          // Legs
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(18 + stride * 0.5, 32, 4, 9);
+          ctx.fillRect(25 - stride * 0.5, 32, 4, 9);
+
+          // Armor Torso
+          ctx.fillStyle = '#6366f1';
+          ctx.fillRect(16, 18 + bob, 16, 15);
+          ctx.fillStyle = '#a5b4fc';
+          ctx.fillRect(18, 20 + bob, 12, 5);
+
+          // Helmet & Plume
+          ctx.fillStyle = '#f43f5e';
+          ctx.fillRect(20, 4 + bob, 8, 4);
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(17, 8 + bob, 14, 11);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(21, 12 + bob, 8, 3);
+
+          // Energy Blade
+          ctx.save();
+          ctx.translate(32, 24 + bob);
+          ctx.rotate((swing * Math.PI) / 180);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(-2, -3, 6, 4);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(0, -17, 4, 15);
+          ctx.restore();
+
+          const num = String(f + 1).padStart(2, '0');
+          state.sprites.push({
+            id: state.nextId++,
+            name: `knight_run_${num}`,
+            filename: `knight_run_${num}.png`,
+            img: c,
+            width: 48,
+            height: 48,
+            trimBounds: computeTrimBounds(c, state.trimThreshold),
+            packed: { x: 0, y: 0, w: 48, h: 48 }
+          });
+        }
+      } else if (presetName === 'dungeon') {
+        document.getElementById('sheetNameInput').value = 'rpg_loot_atlas';
+        const specs = [
+          { name: 'iron_broadsword', w: 28, h: 60, color: '#38bdf8', shape: 'sword' },
+          { name: 'crimson_flask', w: 32, h: 36, color: '#f43f5e', shape: 'orb' },
+          { name: 'mana_vial', w: 28, h: 34, color: '#6366f1', shape: 'orb' },
+          { name: 'golden_chest', w: 54, h: 42, color: '#f59e0b', shape: 'box' },
+          { name: 'tower_shield', w: 44, h: 52, color: '#10b981', shape: 'shield' },
+          { name: 'emerald_gem', w: 24, h: 24, color: '#34d399', shape: 'gem' },
+          { name: 'ancient_tome', w: 38, h: 44, color: '#a855f7', shape: 'box' },
+          { name: 'war_hammer', w: 46, h: 58, color: '#94a3b8', shape: 'sword' },
+          { name: 'gold_coin_stack', w: 26, h: 26, color: '#fbbf24', shape: 'orb' },
+          { name: 'dragon_key', w: 22, h: 42, color: '#f97316', shape: 'sword' },
+          { name: 'arcane_scroll', w: 36, h: 30, color: '#fde047', shape: 'box' },
+          { name: 'ruby_signet', w: 20, h: 20, color: '#fb7185', shape: 'gem' },
+          { name: 'obsidian_dagger', w: 20, h: 44, color: '#c084fc', shape: 'sword' },
+          { name: 'oak_buckler', w: 36, h: 36, color: '#d97706', shape: 'shield' },
+          { name: 'frost_crystal', w: 28, h: 38, color: '#22d3ee', shape: 'gem' },
+          { name: 'torch_lit', w: 22, h: 50, color: '#ef4444', shape: 'sword' },
+          { name: 'silver_chalice', w: 30, h: 36, color: '#e2e8f0', shape: 'orb' },
+          { name: 'runed_tablet', w: 48, h: 48, color: '#818cf8', shape: 'box' }
+        ];
+        specs.forEach(sp => {
+          const c = document.createElement('canvas');
+          c.width = sp.w;
+          c.height = sp.h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = sp.color;
+          const pad = 3;
+          ctx.fillRect(pad, pad, sp.w - pad * 2, sp.h - pad * 2);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(pad + 1, pad + 1, sp.w - (pad + 1) * 2, sp.h - (pad + 1) * 2);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+          ctx.fillRect(pad + 4, pad + 4, sp.w - (pad + 4) * 2, Math.floor((sp.h - pad * 2) / 2));
+
+          state.sprites.push({
+            id: state.nextId++,
+            name: sp.name,
+            filename: `${sp.name}.png`,
+            img: c,
+            width: sp.w,
+            height: sp.h,
+            trimBounds: computeTrimBounds(c, state.trimThreshold),
+            packed: { x: 0, y: 0, w: sp.w, h: sp.h }
+          });
+        });
+      } else {
+        document.getElementById('sheetNameInput').value = 'stress_atlas_64';
+        const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#06b6d4', '#f43f5e'];
+        for (let i = 0; i < 64; i++) {
+          const w = 16 + ((i * 13) % 36);
+          const h = 16 + ((i * 19) % 36);
+          const c = document.createElement('canvas');
+          c.width = w;
+          c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = colors[i % colors.length];
+          ctx.fillRect(2, 2, w - 4, h - 4);
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.fillRect(4, 4, w - 8, 4);
+
+          const num = String(i + 1).padStart(2, '0');
+          state.sprites.push({
+            id: state.nextId++,
+            name: `tile_${num}`,
+            filename: `tile_${num}.png`,
+            img: c,
+            width: w,
+            height: h,
+            trimBounds: computeTrimBounds(c, state.trimThreshold),
+            packed: { x: 0, y: 0, w, h }
+          });
+        }
+      }
+
+      if (state.sprites.length > 0) {
+        state.selectedSpriteId = state.sprites[0].id;
+      }
+
+      packAndRender(true);
+      syncGifFramesFromPacker(false);
+      showToast(`Loaded "${presetName}" demo pack (${state.sprites.length} sprites)`, 'info');
+    }
+
+    /***************************************************************************
+     * 5. MAXRECTS BIN PACKER & MULTI-LAYOUT PACKING ENGINE
+     ***************************************************************************/
+    class MaxRectsBin {
+      constructor(width, height) {
+        this.binWidth = width;
+        this.binHeight = height;
+        this.freeRectangles = [{ x: 0, y: 0, w: width, h: height }];
+      }
+
+      insert(width, height, method) {
+        let bestNode = null;
+        let best1 = Infinity;
+        let best2 = Infinity;
+
+        for (let i = 0; i < this.freeRectangles.length; i++) {
+          const free = this.freeRectangles[i];
+          if (free.w >= width && free.h >= height) {
+            const leftoverHoriz = Math.abs(free.w - width);
+            const leftoverVert = Math.abs(free.h - height);
+            const shortSideFit = Math.min(leftoverHoriz, leftoverVert);
+            const longSideFit = Math.max(leftoverHoriz, leftoverVert);
+            const areaFit = free.w * free.h - width * height;
+
+            let score1 = 0, score2 = 0;
+            if (method === 'bssf') {
+              score1 = shortSideFit; score2 = longSideFit;
+            } else if (method === 'blsf') {
+              score1 = longSideFit; score2 = shortSideFit;
+            } else if (method === 'baf') {
+              score1 = areaFit; score2 = shortSideFit;
+            } else {
+              score1 = free.y; score2 = free.x;
+            }
+
+            if (score1 < best1 || (score1 === best1 && score2 < best2)) {
+              bestNode = { x: free.x, y: free.y, w: width, h: height };
+              best1 = score1;
+              best2 = score2;
+            }
+          }
+        }
+
+        if (!bestNode) return null;
+
+        let numRectanglesToProcess = this.freeRectangles.length;
+        for (let i = 0; i < numRectanglesToProcess; i++) {
+          if (this.splitFreeNode(this.freeRectangles[i], bestNode)) {
+            this.freeRectangles.splice(i, 1);
+            i--;
+            numRectanglesToProcess--;
+          }
+        }
+
+        this.pruneFreeList();
+        return bestNode;
+      }
+
+      splitFreeNode(freeNode, usedNode) {
+        if (
+          usedNode.x >= freeNode.x + freeNode.w ||
+          usedNode.x + usedNode.w <= freeNode.x ||
+          usedNode.y >= freeNode.y + freeNode.h ||
+          usedNode.y + usedNode.h <= freeNode.y
+        ) {
+          return false;
+        }
+
+        if (usedNode.x < freeNode.x + freeNode.w && usedNode.x + usedNode.w > freeNode.x) {
+          if (usedNode.y > freeNode.y && usedNode.y < freeNode.y + freeNode.h) {
+            this.freeRectangles.push({
+              x: freeNode.x,
+              y: freeNode.y,
+              w: freeNode.w,
+              h: usedNode.y - freeNode.y
+            });
+          }
+          if (usedNode.y + usedNode.h < freeNode.y + freeNode.h) {
+            this.freeRectangles.push({
+              x: freeNode.x,
+              y: usedNode.y + usedNode.h,
+              w: freeNode.w,
+              h: freeNode.y + freeNode.h - (usedNode.y + usedNode.h)
+            });
+          }
+        }
+
+        if (usedNode.y < freeNode.y + freeNode.h && usedNode.y + usedNode.h > freeNode.y) {
+          if (usedNode.x > freeNode.x && usedNode.x < freeNode.x + freeNode.w) {
+            this.freeRectangles.push({
+              x: freeNode.x,
+              y: freeNode.y,
+              w: usedNode.x - freeNode.x,
+              h: freeNode.h
+            });
+          }
+          if (usedNode.x + usedNode.w < freeNode.x + freeNode.w) {
+            this.freeRectangles.push({
+              x: usedNode.x + usedNode.w,
+              y: freeNode.y,
+              w: freeNode.x + freeNode.w - (usedNode.x + usedNode.w),
+              h: freeNode.h
+            });
+          }
+        }
+        return true;
+      }
+
+      pruneFreeList() {
+        for (let i = 0; i < this.freeRectangles.length; i++) {
+          for (let j = i + 1; j < this.freeRectangles.length; j++) {
+            const r1 = this.freeRectangles[i];
+            const r2 = this.freeRectangles[j];
+            if (r2.x >= r1.x && r2.y >= r1.y && r2.x + r2.w <= r1.x + r1.w && r2.y + r2.h <= r1.y + r1.h) {
+              this.freeRectangles.splice(j, 1);
+              j--;
+            } else if (r1.x >= r2.x && r1.y >= r2.y && r1.x + r1.w <= r2.x + r2.w && r1.y + r1.h <= r2.y + r2.h) {
+              this.freeRectangles.splice(i, 1);
+              i--;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    function getSpriteActiveDims(sp) {
+      if (state.trim && sp.trimBounds) {
+        return { w: sp.trimBounds.w, h: sp.trimBounds.h, sx: sp.trimBounds.x, sy: sp.trimBounds.y };
+      }
+      return { w: sp.width, h: sp.height, sx: 0, sy: 0 };
+    }
+
+    function runPackingEngine() {
+      const count = state.sprites.length;
+      if (count === 0) {
+        state.sheetWidth = 64;
+        state.sheetHeight = 64;
+        state.efficiency = 0;
+        state.trimmedPixelsSavedPct = 0;
+        return;
+      }
+
+      const margin = state.margin;
+      const spacing = state.spacing;
+      const extrude = state.extrude;
+      const padPerSprite = extrude * 2;
+
+      let rawAreaTotal = 0;
+      let activeAreaTotal = 0;
+
+      const items = state.sprites.map((sp, idx) => {
+        const dims = getSpriteActiveDims(sp);
+        rawAreaTotal += sp.width * sp.height;
+        activeAreaTotal += dims.w * dims.h;
+        return {
+          sprite: sp,
+          origIndex: idx,
+          w: dims.w + padPerSprite,
+          h: dims.h + padPerSprite,
+          drawW: dims.w,
+          drawH: dims.h
+        };
+      });
+
+      state.trimmedPixelsSavedPct = rawAreaTotal > 0
+        ? Math.max(0, Math.round(((rawAreaTotal - activeAreaTotal) / rawAreaTotal) * 100))
+        : 0;
+
+      let outW = 1, outH = 1;
+
+      if (state.algorithm === 'horizontal') {
+        let curX = margin;
+        let maxH = 1;
+        items.forEach((it, i) => {
+          it.sprite.packed = {
+            x: curX + extrude,
+            y: margin + extrude,
+            w: it.drawW,
+            h: it.drawH
+          };
+          curX += it.w + (i < items.length - 1 ? spacing : 0);
+          if (it.h > maxH) maxH = it.h;
+        });
+        outW = curX + margin;
+        outH = maxH + margin * 2;
+
+      } else if (state.algorithm === 'vertical') {
+        let curY = margin;
+        let maxW = 1;
+        items.forEach((it, i) => {
+          it.sprite.packed = {
+            x: margin + extrude,
+            y: curY + extrude,
+            w: it.drawW,
+            h: it.drawH
+          };
+          curY += it.h + (i < items.length - 1 ? spacing : 0);
+          if (it.w > maxW) maxW = it.w;
+        });
+        outW = maxW + margin * 2;
+        outH = curY + margin;
+
+      } else if (state.algorithm === 'grid') {
+        const cols = Math.max(1, state.gridCols);
+        const rows = Math.ceil(items.length / cols);
+
+        if (state.gridUniform) {
+          let cellW = 1, cellH = 1;
+          items.forEach(it => {
+            if (it.w > cellW) cellW = it.w;
+            if (it.h > cellH) cellH = it.h;
+          });
+          items.forEach((it, idx) => {
+            const c = idx % cols;
+            const r = Math.floor(idx / cols);
+            const cellX = margin + c * (cellW + spacing);
+            const cellY = margin + r * (cellH + spacing);
+            it.sprite.packed = {
+              x: cellX + extrude + Math.floor((cellW - it.w) / 2),
+              y: cellY + extrude + Math.floor((cellH - it.h) / 2),
+              w: it.drawW,
+              h: it.drawH
+            };
+          });
+          outW = margin * 2 + cols * cellW + Math.max(0, cols - 1) * spacing;
+          outH = margin * 2 + rows * cellH + Math.max(0, rows - 1) * spacing;
+        } else {
+          let curY = margin;
+          let maxRowW = 1;
+          for (let r = 0; r < rows; r++) {
+            let curX = margin;
+            let rowH = 1;
+            const rowItems = items.slice(r * cols, (r + 1) * cols);
+            rowItems.forEach((it, cIdx) => {
+              it.sprite.packed = {
+                x: curX + extrude,
+                y: curY + extrude,
+                w: it.drawW,
+                h: it.drawH
+              };
+              curX += it.w + (cIdx < rowItems.length - 1 ? spacing : 0);
+              if (it.h > rowH) rowH = it.h;
+            });
+            if (curX + margin > maxRowW) maxRowW = curX + margin;
+            curY += rowH + (r < rows - 1 ? spacing : 0);
+          }
+          outW = maxRowW;
+          outH = curY + margin;
+        }
+
+      } else {
+        // MaxRects Optimal Bin Packing
+        const sorted = [...items];
+        if (state.sortOrder === 'maxside') {
+          sorted.sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h) || b.w * b.h - a.w * a.h);
+        } else if (state.sortOrder === 'area') {
+          sorted.sort((a, b) => b.w * b.h - a.w * a.h);
+        } else if (state.sortOrder === 'height') {
+          sorted.sort((a, b) => b.h - a.h || b.w - a.w);
+        }
+
+        let maxItemW = 1, maxItemH = 1, paddedArea = 0;
+        sorted.forEach(it => {
+          const pw = it.w + spacing;
+          const ph = it.h + spacing;
+          if (pw > maxItemW) maxItemW = pw;
+          if (ph > maxItemH) maxItemH = ph;
+          paddedArea += pw * ph;
+        });
+
+        const heuristics = state.heuristic === 'auto'
+          ? ['bssf', 'blsf', 'baf', 'bl']
+          : [state.heuristic];
+
+        let bestResult = null;
+        let bestBinArea = Infinity;
+
+        heuristics.forEach(hMethod => {
+          let binW = Math.max(maxItemW, Math.ceil(Math.sqrt(paddedArea)));
+          let binH = Math.max(maxItemH, Math.ceil(paddedArea / binW));
+
+          for (let attempt = 0; attempt < 40; attempt++) {
+            const bin = new MaxRectsBin(binW, binH);
+            const placements = [];
+            let success = true;
+            let usedMaxX = 0, usedMaxY = 0;
+
+            for (let i = 0; i < sorted.length; i++) {
+              const it = sorted[i];
+              const node = bin.insert(it.w + spacing, it.h + spacing, hMethod);
+              if (!node) {
+                success = false;
+                break;
+              }
+              placements.push({ item: it, x: node.x, y: node.y });
+              if (node.x + it.w > usedMaxX) usedMaxX = node.x + it.w;
+              if (node.y + it.h > usedMaxY) usedMaxY = node.y + it.h;
+            }
+
+            if (success) {
+              const finalW = usedMaxX + margin * 2;
+              const finalH = usedMaxY + margin * 2;
+              const area = finalW * finalH;
+              if (area < bestBinArea) {
+                bestBinArea = area;
+                bestResult = { placements, finalW, finalH };
+              }
+              break;
+            } else {
+              if (binW <= binH) binW = Math.ceil(binW * 1.15) + 4;
+              else binH = Math.ceil(binH * 1.15) + 4;
+            }
+          }
+        });
+
+        if (bestResult) {
+          bestResult.placements.forEach(p => {
+            p.item.sprite.packed = {
+              x: margin + p.x + extrude,
+              y: margin + p.y + extrude,
+              w: p.item.drawW,
+              h: p.item.drawH
+            };
+          });
+          outW = bestResult.finalW;
+          outH = bestResult.finalH;
+        }
+      }
+
+      if (state.forceSquare) {
+        const s = Math.max(outW, outH);
+        outW = s;
+        outH = s;
+      }
+      if (state.powerOfTwo) {
+        outW = nextPowerOfTwo(outW);
+        outH = nextPowerOfTwo(outH);
+        if (state.forceSquare) {
+          const s = Math.max(outW, outH);
+          outW = s;
+          outH = s;
+        }
+      }
+
+      state.sheetWidth = Math.max(1, outW);
+      state.sheetHeight = Math.max(1, outH);
+      const sheetArea = state.sheetWidth * state.sheetHeight;
+      state.efficiency = sheetArea > 0 ? Math.min(100, Math.round((activeAreaTotal / sheetArea) * 100)) : 0;
+    }
+
+    /***************************************************************************
+     * 6. PURE 32-BIT RGBA OFFSCREEN RENDERER & INTERACTIVE CANVAS COMPOSITOR
+     ***************************************************************************/
+    function renderCleanExportCanvas() {
+      const w = state.sheetWidth;
+      const h = state.sheetHeight;
+      exportCanvas.width = w;
+      exportCanvas.height = h;
+      exportCtx.clearRect(0, 0, w, h);
+      exportCtx.imageSmoothingEnabled = false;
+
+      const extrude = state.extrude;
+
+      state.sprites.forEach(sp => {
+        const { x, y, w: dw, h: dh } = sp.packed;
+        const dims = getSpriteActiveDims(sp);
+        const sx = dims.sx;
+        const sy = dims.sy;
+
+        // Optional Edge Extrusion (prevents UV seam bleeding in WebGL / Unity / Godot)
+        if (extrude > 0) {
+          // Top & Bottom strips
+          exportCtx.drawImage(sp.img, sx, sy, dw, 1, x, y - extrude, dw, extrude);
+          exportCtx.drawImage(sp.img, sx, sy + dh - 1, dw, 1, x, y + dh, dw, extrude);
+          // Left & Right strips
+          exportCtx.drawImage(sp.img, sx, sy, 1, dh, x - extrude, y, extrude, dh);
+          exportCtx.drawImage(sp.img, sx + dw - 1, sy, 1, dh, x + dw, y, extrude, dh);
+        }
+
+        // Core 32-bit RGBA Sprite Draw
+        exportCtx.drawImage(sp.img, sx, sy, dw, dh, x, y, dw, dh);
+      });
+    }
+
+    function renderPackerViewportCanvas() {
+      const w = state.sheetWidth;
+      const h = state.sheetHeight;
+      packerCanvas.width = w;
+      packerCanvas.height = h;
+      packerCtx.clearRect(0, 0, w, h);
+      packerCtx.imageSmoothingEnabled = false;
+
+      // Copy pure RGBA sheet onto display canvas
+      packerCtx.drawImage(exportCanvas, 0, 0);
+
+      // Draw Visual-Only Bounding Boxes & Selection Highlight
+      if (state.showBoundsOverlay || state.selectedSpriteId) {
+        packerCtx.save();
+        state.sprites.forEach((sp, idx) => {
+          const isSel = sp.id === state.selectedSpriteId;
+          if (!state.showBoundsOverlay && !isSel) return;
+
+          const { x, y, w: bw, h: bh } = sp.packed;
+          packerCtx.lineWidth = 1;
+          if (isSel) {
+            packerCtx.strokeStyle = '#818cf8';
+            packerCtx.fillStyle = 'rgba(99, 102, 241, 0.16)';
+            packerCtx.fillRect(x, y, bw, bh);
+          } else {
+            packerCtx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+          }
+          packerCtx.strokeRect(x + 0.5, y + 0.5, Math.max(0, bw - 1), Math.max(0, bh - 1));
+
+          if (state.showLabelsOverlay && bw >= 14 && bh >= 10) {
+            const label = `#${idx + 1}`;
+            packerCtx.font = 'bold 9px "JetBrains Mono", monospace';
+            const tw = packerCtx.measureText(label).width;
+            packerCtx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            packerCtx.fillRect(x + 1, y + 1, tw + 4, 11);
+            packerCtx.fillStyle = '#a5b4fc';
+            packerCtx.fillText(label, x + 3, y + 9);
+          }
+        });
+        packerCtx.restore();
+      }
+
+      // Update Telemetry Readouts
+      document.getElementById('teleDim').textContent = `${w}×${h}`;
+      document.getElementById('teleEff').textContent = `${state.efficiency}%`;
+      document.getElementById('teleTrimSaved').textContent = `${state.trimmedPixelsSavedPct}%`;
+      document.getElementById('statusDimText').textContent = `${w}×${h} px`;
+      document.getElementById('statusEffText').textContent = `${state.efficiency}%`;
+    }
+
+    function packAndRender(fitView = false) {
+      runPackingEngine();
+      renderCleanExportCanvas();
+      renderPackerViewportCanvas();
+      renderSpriteList();
+      renderPackerFilmstrip();
+      updateAtlasInspectorCode();
+      updateHeaderBadges();
+      if (fitView) fitPackerViewport();
+    }
+
+    function onPackerConfigChange() {
+      state.algorithm = document.getElementById('packAlgoSelect').value;
+      state.heuristic = document.getElementById('packHeuristicSelect').value;
+      state.sortOrder = document.getElementById('packSortSelect').value;
+      state.gridCols = Math.max(1, parseInt(document.getElementById('gridColsInput').value, 10) || 4);
+      state.gridUniform = document.getElementById('gridUniformToggle').checked;
+      state.spacing = Math.max(0, parseInt(document.getElementById('packSpacingInput').value, 10) || 0);
+      state.margin = Math.max(0, parseInt(document.getElementById('packMarginInput').value, 10) || 0);
+      state.extrude = Math.max(0, parseInt(document.getElementById('packExtrudeInput').value, 10) || 0);
+
+      const newTrim = document.getElementById('packTrimToggle').checked;
+      const newThresh = parseInt(document.getElementById('trimThreshRange').value, 10) || 1;
+      document.getElementById('trimThresholdBox').classList.toggle('hidden', !newTrim);
+
+      if (newThresh !== state.trimThreshold) {
+        state.trimThreshold = newThresh;
+        state.sprites.forEach(sp => {
+          sp.trimBounds = computeTrimBounds(sp.img, state.trimThreshold);
+        });
+      }
+      state.trim = newTrim;
+      state.powerOfTwo = document.getElementById('packPotToggle').checked;
+      state.forceSquare = document.getElementById('packSquareToggle').checked;
+
+      document.getElementById('maxRectsSubPanel').classList.toggle('hidden', state.algorithm !== 'maxrects');
+      document.getElementById('gridSubPanel').classList.toggle('hidden', state.algorithm !== 'grid');
+
+      packAndRender(false);
+    }
+
+    /***************************************************************************
+     * 7. UPGRADED CSS SPRITESHEET (+ @KEYFRAMES) & ATLAS METADATA EXPORTERS
+     ***************************************************************************/
+    function sanitizeCssClass(name) {
+      return name.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/^-+|-+$/g, '') || 'frame';
+    }
+
+    function generateAtlasMetadata(format) {
+      const sheetName = getBaseSheetName();
+      const fileName = `${sheetName}.png`;
+      const sw = state.sheetWidth;
+      const sh = state.sheetHeight;
+
+      if (format === 'css') {
+        const lines = [];
+        lines.push(`/**`);
+        lines.push(` * Generated by SpriteForge Studio (100% Local)`);
+        lines.push(` * Sheet: ${fileName} (${sw}x${sh}px, ${state.sprites.length} sprites)`);
+        lines.push(` */`);
+        lines.push(`:root {`);
+        lines.push(`  --sheet-url: url('${fileName}');`);
+        lines.push(`  --sheet-w: ${sw}px;`);
+        lines.push(`  --sheet-h: ${sh}px;`);
+        lines.push(`}`);
+        lines.push(``);
+        lines.push(`.sprite {`);
+        lines.push(`  display: inline-block;`);
+        lines.push(`  background-image: var(--sheet-url);`);
+        lines.push(`  background-repeat: no-repeat;`);
+        lines.push(`  background-size: var(--sheet-w) var(--sheet-h);`);
+        lines.push(`  image-rendering: -moz-crisp-edges;`);
+        lines.push(`  image-rendering: pixelated;`);
+        lines.push(`}`);
+        lines.push(``);
+
+        state.sprites.forEach((sp, idx) => {
+          const cls = sanitizeCssClass(sp.name);
+          const { x, y, w, h } = sp.packed;
+          const trimNote = state.trim && sp.trimBounds && sp.trimBounds.trimmed
+            ? ` /* trimmed from ${sp.width}x${sp.height} (offset +${sp.trimBounds.x},+${sp.trimBounds.y}) */`
+            : '';
+          lines.push(`.sprite-${cls} { width: ${w}px; height: ${h}px; background-position: -${x}px -${y}px; }${trimNote}`);
+        });
+
+        // Generate ready-to-use @keyframes animation block
+        if (state.sprites.length > 1) {
+          const first = state.sprites[0].packed;
+          const durationSec = (state.sprites.length / Math.max(1, state.animFps)).toFixed(2);
+          lines.push(``);
+          lines.push(`/* Ready-to-use CSS Sprite Animation (${state.sprites.length} frames @ ${state.animFps} FPS) */`);
+
+          // Check if horizontal strip with uniform spacing for clean steps()
+          const isUniformRow = state.algorithm === 'horizontal' && state.spacing === 0 && state.margin === 0 &&
+            state.sprites.every(s => s.packed.w === first.w && s.packed.h === first.h);
+
+          if (isUniformRow) {
+            const totalW = first.w * state.sprites.length;
+            lines.push(`.sprite-anim-${sanitizeCssClass(sheetName)} {`);
+            lines.push(`  width: ${first.w}px;`);
+            lines.push(`  height: ${first.h}px;`);
+            lines.push(`  background-image: var(--sheet-url);`);
+            lines.push(`  image-rendering: pixelated;`);
+            lines.push(`  animation: play-${sanitizeCssClass(sheetName)} ${durationSec}s steps(${state.sprites.length}) infinite;`);
+            lines.push(`}`);
+            lines.push(`@keyframes play-${sanitizeCssClass(sheetName)} {`);
+            lines.push(`  from { background-position: 0px 0px; }`);
+            lines.push(`  to   { background-position: -${totalW}px 0px; }`);
+            lines.push(`}`);
+          } else {
+            lines.push(`.sprite-anim-${sanitizeCssClass(sheetName)} {`);
+            lines.push(`  width: ${first.w}px;`);
+            lines.push(`  height: ${first.h}px;`);
+            lines.push(`  background-image: var(--sheet-url);`);
+            lines.push(`  image-rendering: pixelated;`);
+            lines.push(`  animation: play-${sanitizeCssClass(sheetName)} ${durationSec}s steps(1, end) infinite;`);
+            lines.push(`}`);
+            lines.push(`@keyframes play-${sanitizeCssClass(sheetName)} {`);
+            state.sprites.forEach((sp, i) => {
+              const pct = ((i / state.sprites.length) * 100).toFixed(2).replace(/\.00$/, '');
+              lines.push(`  ${pct}% { background-position: -${sp.packed.x}px -${sp.packed.y}px; width: ${sp.packed.w}px; height: ${sp.packed.h}px; }`);
+            });
+            lines.push(`}`);
+          }
+        }
+        return lines.join('\n');
+      }
+
+      if (format === 'json-hash') {
+        const frames = {};
+        state.sprites.forEach(sp => {
+          const tb = state.trim && sp.trimBounds ? sp.trimBounds : { trimmed: false, x: 0, y: 0, w: sp.width, h: sp.height };
+          frames[sp.name] = {
+            frame: { x: sp.packed.x, y: sp.packed.y, w: sp.packed.w, h: sp.packed.h },
+            rotated: false,
+            trimmed: Boolean(tb.trimmed),
+            spriteSourceSize: { x: tb.x, y: tb.y, w: sp.packed.w, h: sp.packed.h },
+            sourceSize: { w: sp.width, h: sp.height }
+          };
+        });
+        return JSON.stringify({
+          frames,
+          meta: {
+            app: 'SpriteForge Studio',
+            image: fileName,
+            format: 'RGBA8888',
+            size: { w: sw, h: sh },
+            scale: '1'
+          }
+        }, null, 2);
+      }
+
+      if (format === 'json-array') {
+        const frames = state.sprites.map(sp => {
+          const tb = state.trim && sp.trimBounds ? sp.trimBounds : { trimmed: false, x: 0, y: 0, w: sp.width, h: sp.height };
+          return {
+            filename: sp.name,
+            frame: { x: sp.packed.x, y: sp.packed.y, w: sp.packed.w, h: sp.packed.h },
+            rotated: false,
+            trimmed: Boolean(tb.trimmed),
+            spriteSourceSize: { x: tb.x, y: tb.y, w: sp.packed.w, h: sp.packed.h },
+            sourceSize: { w: sp.width, h: sp.height }
+          };
+        });
+        return JSON.stringify({
+          frames,
+          meta: {
+            app: 'SpriteForge Studio',
+            image: fileName,
+            format: 'RGBA8888',
+            size: { w: sw, h: sh },
+            scale: '1'
+          }
+        }, null, 2);
+      }
+
+      if (format === 'xml') {
+        const lines = [`<?xml version="1.0" encoding="UTF-8"?>`];
+        lines.push(`<TextureAtlas imagePath="${fileName}" width="${sw}" height="${sh}">`);
+        state.sprites.forEach(sp => {
+          const tb = state.trim && sp.trimBounds ? sp.trimBounds : { trimmed: false, x: 0, y: 0 };
+          const trimAttrs = tb.trimmed
+            ? ` frameX="-${tb.x}" frameY="-${tb.y}" frameWidth="${sp.width}" frameHeight="${sp.height}"`
+            : '';
+          lines.push(`  <SubTexture name="${sp.name}" x="${sp.packed.x}" y="${sp.packed.y}" width="${sp.packed.w}" height="${sp.packed.h}"${trimAttrs}/>`);
+        });
+        lines.push(`</TextureAtlas>`);
+        return lines.join('\n');
+      }
+
+      return '';
+    }
+
+    function setAtlasInspectorFormat(fmt) {
+      state.atlasFormat = fmt;
+      ['css', 'json-hash', 'json-array', 'xml'].forEach(f => {
+        const btn = document.getElementById(`atlasFmtBtn-${f}`);
+        if (f === fmt) {
+          btn.className = 'px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-600 text-white transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition';
+        }
+      });
+      updateAtlasInspectorCode();
+    }
+
+    function updateAtlasInspectorCode() {
+      const box = document.getElementById('atlasCodeTextarea');
+      if (box) {
+        box.value = generateAtlasMetadata(state.atlasFormat);
+      }
+    }
+
+    function copyAtlasInspectorCode() {
+      const box = document.getElementById('atlasCodeTextarea');
+      box.select();
+      document.execCommand('copy');
+      showToast(`Copied ${state.atlasFormat.toUpperCase()} code to clipboard!`, 'success');
+    }
+
+    function downloadAtlasInspectorFile() {
+      const code = generateAtlasMetadata(state.atlasFormat);
+      const base = getBaseSheetName();
+      const extMap = { 'css': 'css', 'json-hash': 'json', 'json-array': 'json', 'xml': 'xml' };
+      const ext = extMap[state.atlasFormat] || 'txt';
+      const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${base}.${ext}`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      showToast(`Downloaded "${base}.${ext}"`, 'success');
+    }
+
+    function downloadSpritesheetPNG() {
+      if (state.sprites.length === 0) {
+        showToast('Add some sprites first before exporting!', 'warn');
+        return;
+      }
+      renderCleanExportCanvas();
+      const base = getBaseSheetName();
+      exportCanvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${base}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        showToast(`Exported 32-bit transparent "${base}.png" (${state.sheetWidth}×${state.sheetHeight})!`, 'success');
+      }, 'image/png');
+    }
+
+    /***************************************************************************
+     * 8. SPRITE LIST, DRAG & DROP, AND ANIMATION FILMSTRIP (MODE 1)
+     ***************************************************************************/
+    function handlePackerFilesSelect(event) {
+      const files = Array.from(event.target.files || []);
+      ingestSpriteFiles(files);
+      event.target.value = '';
+    }
+
+    function ingestSpriteFiles(files) {
+      const valid = files.filter(f => f.type.startsWith('image/') || /\.(png|webp|gif|svg)$/i.test(f.name));
+      if (valid.length === 0) return;
+
+      let loaded = 0;
+      valid.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const cleanName = file.name.replace(/\.[^/.]+$/, '');
+            state.sprites.push({
+              id: state.nextId++,
+              name: cleanName,
+              filename: file.name,
+              img,
+              width: img.naturalWidth || img.width,
+              height: img.naturalHeight || img.height,
+              trimBounds: computeTrimBounds(img, state.trimThreshold),
+              packed: { x: 0, y: 0, w: img.width, h: img.height }
+            });
+            loaded++;
+            if (loaded === valid.length) {
+              if (!state.selectedSpriteId && state.sprites.length > 0) {
+                state.selectedSpriteId = state.sprites[0].id;
+              }
+              packAndRender(true);
+              syncGifFramesFromPacker(false);
+              showToast(`Added ${valid.length} transparent sprite(s)`, 'success');
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderSpriteList() {
+      const container = document.getElementById('spriteListContainer');
+      const query = (document.getElementById('spriteSearchInput').value || '').toLowerCase().trim();
+      document.getElementById('spriteCountBadge').textContent = state.sprites.length;
+
+      const filtered = state.sprites.filter(s => s.name.toLowerCase().includes(query));
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No matching sprites in list.</div>`;
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      filtered.forEach((sp, idx) => {
+        const isSel = sp.id === state.selectedSpriteId;
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between gap-2 p-1.5 rounded-xl border transition cursor-pointer ${
+          isSel
+            ? 'bg-indigo-600/15 border-indigo-500/50 text-white'
+            : 'bg-elevated/60 hover:bg-elevated border-line text-slate-300'
+        }`;
+        row.onclick = () => {
+          state.selectedSpriteId = sp.id;
+          state.animFrameIndex = state.sprites.findIndex(s => s.id === sp.id);
+          renderPackerViewportCanvas();
+          renderSpriteList();
+          renderPackerFilmstrip();
+        };
+
+        // Crisp Checkerboard Thumbnail
+        const thumbWrap = document.createElement('div');
+        thumbWrap.className = 'w-8 h-8 rounded-lg backdrop-checker-dark border border-slate-700 flex items-center justify-center shrink-0 overflow-hidden';
+        const thumb = document.createElement('canvas');
+        thumb.width = 28;
+        thumb.height = 28;
+        thumb.className = 'pixelated';
+        const tCtx = thumb.getContext('2d');
+        tCtx.imageSmoothingEnabled = false;
+        const sc = Math.min(24 / sp.width, 24 / sp.height);
+        tCtx.drawImage(sp.img, (28 - sp.width * sc) / 2, (28 - sp.height * sc) / 2, Math.max(1, sp.width * sc), Math.max(1, sp.height * sc));
+        thumbWrap.appendChild(thumb);
+
+        const isTrimmed = state.trim && sp.trimBounds && sp.trimBounds.trimmed;
+        const dimLabel = isTrimmed
+          ? `${sp.packed.w}×${sp.packed.h} <span class="text-emerald-400">(trimmed)</span>`
+          : `${sp.width}×${sp.height} px`;
+
+        const info = document.createElement('div');
+        info.className = 'flex-1 min-w-0';
+        info.innerHTML = `
+          <div class="text-xs font-medium truncate">${sp.name}</div>
+          <div class="font-mono text-[10px] text-slate-400">${dimLabel}</div>
+        `;
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'w-6 h-6 rounded-md hover:bg-rose-500/20 text-slate-500 hover:text-rose-300 flex items-center justify-center text-[11px] transition shrink-0';
+        delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        delBtn.title = 'Remove Sprite';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          state.sprites = state.sprites.filter(item => item.id !== sp.id);
+          if (state.selectedSpriteId === sp.id) {
+            state.selectedSpriteId = state.sprites[0] ? state.sprites[0].id : null;
+          }
+          packAndRender(false);
+        };
+
+        row.appendChild(thumbWrap);
+        row.appendChild(info);
+        row.appendChild(delBtn);
+        frag.appendChild(row);
+      });
+
+      container.innerHTML = '';
+      container.appendChild(frag);
+    }
+
+    function sortSpritesBy(criteria) {
+      if (criteria === 'name') {
+        state.sprites.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      } else if (criteria === 'area') {
+        state.sprites.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+      }
+      packAndRender(false);
+    }
+
+    function clearAllSprites() {
+      state.sprites = [];
+      state.selectedSpriteId = null;
+      packAndRender(false);
+      showToast('Cleared all sprites from Packer', 'info');
+    }
+
+    function renderPackerFilmstrip() {
+      const strip = document.getElementById('packerFilmstrip');
+      if (!strip) return;
+      const frag = document.createDocumentFragment();
+
+      state.sprites.forEach((sp, idx) => {
+        const isCurrent = idx === state.animFrameIndex;
+        const card = document.createElement('div');
+        card.className = `shrink-0 w-14 h-16 rounded-lg border p-1 flex flex-col items-center justify-between cursor-pointer transition ${
+          isCurrent ? 'bg-indigo-600/25 border-indigo-400' : 'bg-elevated border-line hover:border-slate-600'
+        }`;
+        card.onclick = () => {
+          state.animFrameIndex = idx;
+          state.selectedSpriteId = sp.id;
+          renderPackerAnimFrame();
+          renderPackerViewportCanvas();
+          renderSpriteList();
+          renderPackerFilmstrip();
+        };
+
+        const c = document.createElement('canvas');
+        c.width = 36;
+        c.height = 36;
+        c.className = 'pixelated rounded backdrop-checker-dark';
+        const cCtx = c.getContext('2d');
+        cCtx.imageSmoothingEnabled = false;
+        const sc = Math.min(32 / sp.width, 32 / sp.height);
+        cCtx.drawImage(sp.img, (36 - sp.width * sc) / 2, (36 - sp.height * sc) / 2, Math.max(1, sp.width * sc), Math.max(1, sp.height * sc));
+
+        const lbl = document.createElement('span');
+        lbl.className = 'font-mono text-[9.5px] text-slate-400';
+        lbl.textContent = `#${idx + 1}`;
+
+        card.appendChild(c);
+        card.appendChild(lbl);
+        frag.appendChild(card);
+      });
+
+      strip.innerHTML = '';
+      strip.appendChild(frag);
+    }
+
+    function renderPackerAnimFrame() {
+      const count = state.sprites.length;
+      animCtx.clearRect(0, 0, animCanvas.width, animCanvas.height);
+      if (count === 0) {
+        document.getElementById('animFrameCounter').textContent = '0/0';
+        return;
+      }
+
+      if (state.animFrameIndex >= count) state.animFrameIndex = 0;
+      if (state.animFrameIndex < 0) state.animFrameIndex = count - 1;
+
+      const cw = animCanvas.width;
+      const ch = animCanvas.height;
+      animCtx.imageSmoothingEnabled = false;
+
+      // Optional Onion Skinning (previous frame at 30% alpha)
+      if (state.onionSkin && count > 1) {
+        const prevIdx = (state.animFrameIndex - 1 + count) % count;
+        const prevSp = state.sprites[prevIdx];
+        const pScale = Math.min((cw - 12) / prevSp.width, (ch - 12) / prevSp.height);
+        animCtx.save();
+        animCtx.globalAlpha = 0.3;
+        animCtx.drawImage(
+          prevSp.img,
+          Math.floor((cw - prevSp.width * pScale) / 2),
+          Math.floor((ch - prevSp.height * pScale) / 2),
+          Math.max(1, prevSp.width * pScale),
+          Math.max(1, prevSp.height * pScale)
+        );
+        animCtx.restore();
+      }
+
+      const currSp = state.sprites[state.animFrameIndex];
+      const scale = Math.min((cw - 12) / currSp.width, (ch - 12) / currSp.height);
+      animCtx.drawImage(
+        currSp.img,
+        Math.floor((cw - currSp.width * scale) / 2),
+        Math.floor((ch - currSp.height * scale) / 2),
+        Math.max(1, currSp.width * scale),
+        Math.max(1, currSp.height * scale)
+      );
+
+      document.getElementById('animFrameCounter').textContent = `${state.animFrameIndex + 1}/${count}`;
+    }
+
+    function togglePackerAnimPlay() {
+      state.animPlaying = !state.animPlaying;
+      document.getElementById('packerAnimPlayIcon').className = state.animPlaying ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]';
+      document.getElementById('packerAnimPlayLabel').textContent = state.animPlaying ? 'Playing' : 'Paused';
+    }
+
+    function stepPackerAnim(dir) {
+      if (state.sprites.length === 0) return;
+      state.animPlaying = false;
+      document.getElementById('packerAnimPlayIcon').className = 'fa-solid fa-play text-[10px]';
+      document.getElementById('packerAnimPlayLabel').textContent = 'Paused';
+      state.animFrameIndex = (state.animFrameIndex + dir + state.sprites.length) % state.sprites.length;
+      renderPackerAnimFrame();
+      renderPackerFilmstrip();
+    }
+
+    function onPackerAnimFpsChange(val) {
+      state.animFps = Math.max(1, Math.min(60, parseInt(val, 10) || 12));
+      document.getElementById('packerAnimFpsBadge').textContent = `${state.animFps} FPS`;
+      if (state.dockTab === 'atlas' && state.atlasFormat === 'css') updateAtlasInspectorCode();
+    }
+
+    function openBottomDockTab(tab) {
+      state.dockTab = tab;
+      if (state.dockCollapsed) togglePackerBottomDock();
+
+      const animBtn = document.getElementById('dockTabBtn-anim');
+      const atlasBtn = document.getElementById('dockTabBtn-atlas');
+      const animContent = document.getElementById('dockContent-anim');
+      const atlasContent = document.getElementById('dockContent-atlas');
+
+      if (tab === 'anim') {
+        animBtn.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 transition';
+        atlasBtn.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-400 hover:text-slate-200 border border-transparent flex items-center gap-1.5 transition';
+        animContent.classList.remove('hidden');
+        atlasContent.classList.add('hidden');
+      } else {
+        atlasBtn.className = 'px-3 py-1 rounded-md text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 transition';
+        animBtn.className = 'px-3 py-1 rounded-md text-xs font-semibold text-slate-400 hover:text-slate-200 border border-transparent flex items-center gap-1.5 transition';
+        atlasContent.classList.remove('hidden');
+        animContent.classList.add('hidden');
+        updateAtlasInspectorCode();
+      }
+    }
+
+    function togglePackerBottomDock() {
+      state.dockCollapsed = !state.dockCollapsed;
+      const dock = document.getElementById('packerBottomDock');
+      const icon = document.getElementById('packerDockToggleIcon');
+      if (state.dockCollapsed) {
+        dock.style.height = '36px';
+        icon.className = 'fa-solid fa-chevron-up text-[10px]';
+      } else {
+        dock.style.height = '220px';
+        icon.className = 'fa-solid fa-chevron-down text-[10px]';
+      }
+    }
+
+    /***************************************************************************
+     * 9. PACKER VIEWPORT ZOOM, PAN, OVERLAYS & HOVER INSPECTION
+     ***************************************************************************/
+    function applyPackerViewportTransform() {
+      const stage = document.getElementById('packerStage');
+      stage.style.transform = `translate(${state.packerPanX}px, ${state.packerPanY}px) scale(${state.packerZoom})`;
+      document.getElementById('packerZoomBadge').textContent = `${Math.round(state.packerZoom * 100)}%`;
+    }
+
+    function adjustPackerZoom(delta) {
+      state.packerZoom = Math.max(0.1, Math.min(16, state.packerZoom + delta));
+      applyPackerViewportTransform();
+    }
+
+    function setPackerZoom100() {
+      state.packerZoom = 1;
+      state.packerPanX = 0;
+      state.packerPanY = 0;
+      applyPackerViewportTransform();
+    }
+
+    function fitPackerViewport() {
+      const vp = document.getElementById('packerViewport');
+      if (!vp) return;
+      const vw = Math.max(120, vp.clientWidth - 80);
+      const vh = Math.max(120, vp.clientHeight - 80);
+      state.packerZoom = Math.max(0.25, Math.min(6, Math.min(vw / state.sheetWidth, vh / state.sheetHeight)));
+      state.packerPanX = 0;
+      state.packerPanY = 0;
+      applyPackerViewportTransform();
+    }
+
+    function togglePackerBoundsOverlay() {
+      state.showBoundsOverlay = !state.showBoundsOverlay;
+      const btn = document.getElementById('hudBoundsBtn');
+      btn.className = state.showBoundsOverlay
+        ? 'px-2 h-6 rounded-lg bg-indigo-600 text-white border border-indigo-400 text-[11px] font-medium flex items-center gap-1.5 transition'
+        : 'px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 text-[11px] font-medium flex items-center gap-1.5 transition';
+      renderPackerViewportCanvas();
+    }
+
+    function togglePackerLabelsOverlay() {
+      state.showLabelsOverlay = !state.showLabelsOverlay;
+      if (state.showLabelsOverlay && !state.showBoundsOverlay) {
+        togglePackerBoundsOverlay();
+      }
+      const btn = document.getElementById('hudLabelsBtn');
+      btn.className = state.showLabelsOverlay
+        ? 'px-2 h-6 rounded-lg bg-indigo-600 text-white border border-indigo-400 text-[11px] font-medium flex items-center gap-1.5 transition'
+        : 'px-2 h-6 rounded-lg bg-elevated hover:bg-elevatedHover border border-line text-slate-300 text-[11px] font-medium flex items-center gap-1.5 transition';
+      renderPackerViewportCanvas();
+    }
+
+    function setPackerBackdrop(cls) {
+      const box = document.getElementById('packerBackdropBox');
+      box.className = `${cls} relative rounded-sm shadow-2xl border border-slate-700/80`;
+    }
+
+    function setupPackerViewportEvents() {
+      const vp = document.getElementById('packerViewport');
+      const pill = document.getElementById('packerHoverPill');
+      let dragging = false, startX = 0, startY = 0, downX = 0, downY = 0;
+
+      vp.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        state.packerZoom = Math.max(0.1, Math.min(16, state.packerZoom * (e.deltaY < 0 ? 1.15 : 0.87)));
+        applyPackerViewportTransform();
+      }, { passive: false });
+
+      vp.addEventListener('mousedown', (e) => {
+        dragging = true;
+        downX = e.clientX;
+        downY = e.clientY;
+        startX = e.clientX - state.packerPanX;
+        startY = e.clientY - state.packerPanY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (state.workspaceMode !== 'packer') return;
+        if (dragging) {
+          state.packerPanX = e.clientX - startX;
+          state.packerPanY = e.clientY - startY;
+          applyPackerViewportTransform();
+          return;
+        }
+
+        // Hit-test hovered sprite on canvas
+        const rect = packerCanvas.getBoundingClientRect();
+        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          const cx = Math.floor((e.clientX - rect.left) / state.packerZoom);
+          const cy = Math.floor((e.clientY - rect.top) / state.packerZoom);
+          const hit = state.sprites.find(sp => cx >= sp.packed.x && cx < sp.packed.x + sp.packed.w && cy >= sp.packed.y && cy < sp.packed.y + sp.packed.h);
+          if (hit) {
+            pill.classList.remove('hidden');
+            document.getElementById('hoverSpriteName').textContent = hit.name;
+            document.getElementById('hoverSpriteCoords').textContent = `x:${hit.packed.x} y:${hit.packed.y} (${hit.packed.w}×${hit.packed.h})`;
+            document.getElementById('hoverSpriteTrim').textContent = (state.trim && hit.trimBounds && hit.trimBounds.trimmed)
+              ? `trimmed from ${hit.width}×${hit.height}`
+              : '';
+          } else {
+            pill.classList.add('hidden');
+          }
+        } else {
+          pill.classList.add('hidden');
+        }
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (!dragging) return;
+        dragging = false;
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) < 4) {
+          const rect = packerCanvas.getBoundingClientRect();
+          const cx = Math.floor((e.clientX - rect.left) / state.packerZoom);
+          const cy = Math.floor((e.clientY - rect.top) / state.packerZoom);
+          const hit = state.sprites.find(sp => cx >= sp.packed.x && cx < sp.packed.x + sp.packed.w && cy >= sp.packed.y && cy < sp.packed.y + sp.packed.h);
+          if (hit) {
+            state.selectedSpriteId = hit.id;
+            state.animFrameIndex = state.sprites.findIndex(s => s.id === hit.id);
+            renderPackerViewportCanvas();
+            renderSpriteList();
+            renderPackerFilmstrip();
+          }
+        }
+      });
+    }
+
+    /***************************************************************************
+     * 10. MODE 2: SPRITESHEET SLICER / UNPACKER + PURE-JS ZIP ARCHIVER
+     ***************************************************************************/
+    const slicerCanvas = document.getElementById('slicerCanvas');
+    const slicerCtx = slicerCanvas.getContext('2d', { willReadFrequently: true });
+    const slicerRawCanvas = document.createElement('canvas');
+    const slicerRawCtx = slicerRawCanvas.getContext('2d', { willReadFrequently: true });
+
+    function loadSlicerSourceImage(imgSource, w, h, methodOverride = null) {
+      state.slicerImg = imgSource;
+      state.slicerWidth = Math.max(1, w);
+      state.slicerHeight = Math.max(1, h);
+
+      slicerRawCanvas.width = state.slicerWidth;
+      slicerRawCanvas.height = state.slicerHeight;
+      slicerRawCtx.clearRect(0, 0, state.slicerWidth, state.slicerHeight);
+      slicerRawCtx.drawImage(imgSource, 0, 0);
+
+      document.getElementById('slicerStatDim').textContent = `${state.slicerWidth}×${state.slicerHeight} px`;
+
+      if (methodOverride) setSlicerMethod(methodOverride, false);
+      runSlicer();
+      fitSlicerToViewport();
+    }
+
+    function handleSlicerFileSelect(event) {
+      const file = (event.target.files || [])[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const clean = file.name.replace(/\.[^/.]+$/, '');
+          document.getElementById('slicePrefixInput').value = clean || 'slice';
+          loadSlicerSourceImage(img, img.naturalWidth || img.width, img.naturalHeight || img.height, 'islands');
+          showToast(`Loaded sheet "${file.name}" (${img.width}×${img.height}) into Slicer`, 'success');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    function sendPackedSheetToSlicer(notify = true) {
+      if (state.sprites.length === 0) {
+        loadDemoSprites('knight');
+      }
+      renderCleanExportCanvas();
+      const snap = document.createElement('canvas');
+      snap.width = exportCanvas.width;
+      snap.height = exportCanvas.height;
+      snap.getContext('2d').drawImage(exportCanvas, 0, 0);
+
+      document.getElementById('slicePrefixInput').value = getBaseSheetName();
+      if (state.workspaceMode !== 'slicer') {
+        switchWorkspaceMode('slicer');
+      }
+      loadSlicerSourceImage(snap, snap.width, snap.height, 'islands');
+      if (notify) showToast(`Imported packed sheet (${snap.width}×${snap.height}) into Slicer`, 'info');
+    }
+
+    function loadDemoSlicerSheet() {
+      loadDemoSprites('dungeon');
+      sendPackedSheetToSlicer(true);
+    }
+
+    function setSlicerMethod(method, shouldRun = true) {
+      state.slicerMethod = method;
+      ['islands', 'grid', 'atlas'].forEach(m => {
+        const btn = document.getElementById(`sliceMethodBtn-${m}`);
+        const panel = document.getElementById(`slicerPanel-${m}`);
+        if (m === method) {
+          btn.className = 'seg-btn active-emerald';
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = 'seg-btn';
+          panel.classList.add('hidden');
+        }
+      });
+      if (method === 'atlas' && !document.getElementById('slicerAtlasInput').value.trim()) {
+        loadCurrentPackerAtlasIntoSlicer(false);
+      }
+      if (shouldRun) runSlicer();
+    }
+
+    function loadCurrentPackerAtlasIntoSlicer(shouldRun = true) {
+      document.getElementById('slicerAtlasInput').value = generateAtlasMetadata('json-hash');
+      if (shouldRun) runSlicer();
+    }
+
+    function runSlicer() {
+      if (!state.slicerImg) return;
+      const w = state.slicerWidth;
+      const h = state.slicerHeight;
+      const imgData = slicerRawCtx.getImageData(0, 0, w, h).data;
+      const prefix = (document.getElementById('slicePrefixInput').value || 'slice').trim();
+      const rawRects = [];
+
+      if (state.slicerMethod === 'grid') {
+        const gridType = document.getElementById('slicerGridType').value;
+        document.getElementById('slicerGridSizeInputs').classList.toggle('hidden', gridType !== 'size');
+        document.getElementById('slicerGridCRInputs').classList.toggle('hidden', gridType !== 'cr');
+
+        const margin = Math.max(0, parseInt(document.getElementById('sliceMargin').value, 10) || 0);
+        const spacing = Math.max(0, parseInt(document.getElementById('sliceSpacing').value, 10) || 0);
+        const skipEmpty = document.getElementById('sliceSkipEmpty').checked;
+        const trimOut = document.getElementById('sliceTrimOutput').checked;
+
+        let cellW = 48, cellH = 48;
+        if (gridType === 'size') {
+          cellW = Math.max(1, parseInt(document.getElementById('sliceCellW').value, 10) || 48);
+          cellH = Math.max(1, parseInt(document.getElementById('sliceCellH').value, 10) || 48);
+        } else {
+          const cols = Math.max(1, parseInt(document.getElementById('sliceCols').value, 10) || 1);
+          const rows = Math.max(1, parseInt(document.getElementById('sliceRows').value, 10) || 1);
+          cellW = Math.max(1, Math.floor((w - margin * 2 - (cols - 1) * spacing) / cols));
+          cellH = Math.max(1, Math.floor((h - margin * 2 - (rows - 1) * spacing) / rows));
+        }
+
+        for (let y = margin; y + cellH <= h - margin + 1; y += cellH + spacing) {
+          for (let x = margin; x + cellW <= w - margin + 1; x += cellW + spacing) {
+            const rw = Math.min(cellW, w - x);
+            const rh = Math.min(cellH, h - y);
+            if (rw <= 0 || rh <= 0) continue;
+
+            let minX = rw, minY = rh, maxX = -1, maxY = -1;
+            for (let cy = 0; cy < rh; cy++) {
+              const rowOff = (y + cy) * w * 4;
+              for (let cx = 0; cx < rw; cx++) {
+                if (imgData[rowOff + (x + cx) * 4 + 3] > 0) {
+                  if (cx < minX) minX = cx;
+                  if (cx > maxX) maxX = cx;
+                  if (cy < minY) minY = cy;
+                  if (cy > maxY) maxY = cy;
+                }
+              }
+            }
+
+            if (maxX === -1 && skipEmpty) continue;
+            if (trimOut && maxX !== -1) {
+              rawRects.push({ x: x + minX, y: y + minY, w: maxX - minX + 1, h: maxY - minY + 1 });
+            } else {
+              rawRects.push({ x, y, w: rw, h: rh });
+            }
+          }
+        }
+
+      } else if (state.slicerMethod === 'islands') {
+        const mergeDist = Math.max(0, parseInt(document.getElementById('islandMergeRange').value, 10) || 0);
+        const minArea = Math.max(1, parseInt(document.getElementById('islandMinAreaRange').value, 10) || 1);
+        const alphaThresh = Math.max(1, parseInt(document.getElementById('islandAlphaRange').value, 10) || 1);
+
+        const visited = new Uint8Array(w * h);
+        const queueX = new Int32Array(w * h);
+        const queueY = new Int32Array(w * h);
+
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = y * w + x;
+            if (visited[idx]) continue;
+            if (imgData[idx * 4 + 3] < alphaThresh) {
+              visited[idx] = 1;
+              continue;
+            }
+
+            let head = 0, tail = 0;
+            queueX[tail] = x;
+            queueY[tail] = y;
+            tail++;
+            visited[idx] = 1;
+
+            let minX = x, maxX = x, minY = y, maxY = y;
+            const step = Math.max(1, mergeDist + 1);
+
+            while (head < tail) {
+              const cx = queueX[head];
+              const cy = queueY[head];
+              head++;
+
+              if (cx < minX) minX = cx;
+              if (cx > maxX) maxX = cx;
+              if (cy < minY) minY = cy;
+              if (cy > maxY) maxY = cy;
+
+              for (let dy = -step; dy <= step; dy++) {
+                const ny = cy + dy;
+                if (ny < 0 || ny >= h) continue;
+                for (let dx = -step; dx <= step; dx++) {
+                  const nx = cx + dx;
+                  if (nx < 0 || nx >= w) continue;
+                  const nIdx = ny * w + nx;
+                  if (!visited[nIdx] && imgData[nIdx * 4 + 3] >= alphaThresh) {
+                    visited[nIdx] = 1;
+                    queueX[tail] = nx;
+                    queueY[tail] = ny;
+                    tail++;
+                  }
+                }
+              }
+            }
+
+            const bw = maxX - minX + 1;
+            const bh = maxY - minY + 1;
+            if (bw * bh >= minArea) {
+              rawRects.push({ x: minX, y: minY, w: bw, h: bh });
+            }
+          }
+        }
+
+        rawRects.sort((a, b) => {
+          if (Math.abs(a.y - b.y) > Math.min(a.h, b.h) * 0.5) return a.y - b.y;
+          return a.x - b.x;
+        });
+
+      } else if (state.slicerMethod === 'atlas') {
+        const text = (document.getElementById('slicerAtlasInput').value || '').trim();
+        if (text.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed.frames) {
+              if (Array.isArray(parsed.frames)) {
+                parsed.frames.forEach(f => {
+                  if (f.frame) rawRects.push({ name: f.filename, x: f.frame.x, y: f.frame.y, w: f.frame.w, h: f.frame.h });
+                });
+              } else {
+                Object.keys(parsed.frames).forEach(k => {
+                  const f = parsed.frames[k];
+                  if (f.frame) rawRects.push({ name: k, x: f.frame.x, y: f.frame.y, w: f.frame.w, h: f.frame.h });
+                });
+              }
+            }
+          } catch (err) {}
+        } else if (text.startsWith('<')) {
+          const regex = /<SubTexture[^>]*name="([^"]+)"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*width="(\d+)"[^>]*height="(\d+)"/g;
+          let m;
+          while ((m = regex.exec(text)) !== null) {
+            rawRects.push({
+              name: m[1],
+              x: parseInt(m[2], 10),
+              y: parseInt(m[3], 10),
+              w: parseInt(m[4], 10),
+              h: parseInt(m[5], 10)
+            });
+          }
+        }
+      }
+
+      state.slices = rawRects.map((r, i) => {
+        const num = String(i + 1).padStart(2, '0');
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, r.w);
+        c.height = Math.max(1, r.h);
+        c.getContext('2d').drawImage(slicerRawCanvas, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+        return {
+          id: i + 1,
+          name: r.name || `${prefix}_${num}`,
+          x: r.x,
+          y: r.y,
+          w: r.w,
+          h: r.h,
+          selected: true,
+          canvas: c
+        };
+      });
+
+      renderSlicerCanvas();
+      renderSliceListAndGallery();
+      updateHeaderBadges();
+    }
+
+    function renameAllSlices() {
+      const prefix = (document.getElementById('slicePrefixInput').value || 'slice').trim();
+      state.slices.forEach((s, i) => {
+        s.name = `${prefix}_${String(i + 1).padStart(2, '0')}`;
+      });
+      renderSliceListAndGallery();
+    }
+
+    function renderSlicerCanvas() {
+      const w = state.slicerWidth;
+      const h = state.slicerHeight;
+      slicerCanvas.width = w;
+      slicerCanvas.height = h;
+      slicerCtx.clearRect(0, 0, w, h);
+      slicerCtx.imageSmoothingEnabled = false;
+      if (state.slicerImg) {
+        slicerCtx.drawImage(slicerRawCanvas, 0, 0);
+      }
+
+      if (state.slicerShowBoxes) {
+        slicerCtx.save();
+        state.slices.forEach((s, idx) => {
+          slicerCtx.lineWidth = 1;
+          if (s.selected) {
+            slicerCtx.strokeStyle = '#10b981';
+            slicerCtx.fillStyle = 'rgba(16, 185, 129, 0.14)';
+          } else {
+            slicerCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+            slicerCtx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+          }
+          slicerCtx.fillRect(s.x, s.y, s.w, s.h);
+          slicerCtx.strokeRect(s.x + 0.5, s.y + 0.5, Math.max(0, s.w - 1), Math.max(0, s.h - 1));
+
+          if (s.w >= 12 && s.h >= 10) {
+            const lbl = String(idx + 1);
+            slicerCtx.font = 'bold 9px "JetBrains Mono", monospace';
+            const tw = slicerCtx.measureText(lbl).width;
+            slicerCtx.fillStyle = s.selected ? 'rgba(6, 78, 59, 0.9)' : 'rgba(30, 41, 59, 0.85)';
+            slicerCtx.fillRect(s.x + 1, s.y + 1, tw + 4, 11);
+            slicerCtx.fillStyle = s.selected ? '#6ee7b7' : '#94a3b8';
+            slicerCtx.fillText(lbl, s.x + 3, s.y + 9);
+          }
+        });
+        slicerCtx.restore();
+      }
+
+      const selCount = state.slices.filter(s => s.selected).length;
+      document.getElementById('sliceCountBadge').textContent = selCount;
+      document.getElementById('slicerStatCount').textContent = `${selCount} / ${state.slices.length}`;
+      updateHeaderBadges();
+    }
+
+    function renderSliceListAndGallery() {
+      const listContainer = document.getElementById('sliceListContainer');
+      const galleryStrip = document.getElementById('slicerGalleryStrip');
+
+      if (state.slices.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No slices detected.</div>`;
+        galleryStrip.innerHTML = `<div class="text-xs text-slate-500">Adjust grid or island detection settings on the right.</div>`;
+        return;
+      }
+
+      const listFrag = document.createDocumentFragment();
+      const galFrag = document.createDocumentFragment();
+
+      state.slices.forEach((s, idx) => {
+        // Left Sidebar Row
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between gap-2 p-1.5 rounded-xl border transition cursor-pointer ${
+          s.selected ? 'bg-emerald-950/25 border-emerald-500/40 text-white' : 'bg-elevated/40 border-line text-slate-500'
+        }`;
+        row.onclick = () => {
+          s.selected = !s.selected;
+          renderSlicerCanvas();
+          renderSliceListAndGallery();
+        };
+
+        const thumb = document.createElement('canvas');
+        thumb.width = 28;
+        thumb.height = 28;
+        thumb.className = 'pixelated rounded backdrop-checker-dark border border-slate-700 shrink-0';
+        const tCtx = thumb.getContext('2d');
+        tCtx.imageSmoothingEnabled = false;
+        const sc = Math.min(24 / s.w, 24 / s.h);
+        tCtx.drawImage(s.canvas, (28 - s.w * sc) / 2, (28 - s.h * sc) / 2, Math.max(1, s.w * sc), Math.max(1, s.h * sc));
+
+        const info = document.createElement('div');
+        info.className = 'flex-1 min-w-0';
+        info.innerHTML = `
+          <div class="text-xs font-medium truncate">#${idx + 1} ${s.name}</div>
+          <div class="font-mono text-[10px] text-slate-400">${s.w}×${s.h} at (${s.x},${s.y})</div>
+        `;
+
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'w-6 h-6 rounded-md bg-elevated hover:bg-emerald-600 text-slate-300 hover:text-white flex items-center justify-center text-[10px] transition shrink-0';
+        dlBtn.innerHTML = '<i class="fa-solid fa-download"></i>';
+        dlBtn.title = 'Download Individual PNG';
+        dlBtn.onclick = (e) => {
+          e.stopPropagation();
+          const a = document.createElement('a');
+          a.href = s.canvas.toDataURL('image/png');
+          a.download = `${s.name}.png`;
+          a.click();
+        };
+
+        row.appendChild(thumb);
+        row.appendChild(info);
+        row.appendChild(dlBtn);
+        listFrag.appendChild(row);
+
+        // Bottom Dock Gallery Card
+        const card = document.createElement('div');
+        card.className = `shrink-0 w-24 h-28 rounded-xl border p-2 flex flex-col items-center justify-between cursor-pointer transition ${
+          s.selected ? 'bg-elevated border-emerald-500/45 text-slate-200' : 'bg-elevated/30 border-line text-slate-500 opacity-60'
+        }`;
+        card.onclick = row.onclick;
+
+        const gCanvas = document.createElement('canvas');
+        gCanvas.width = 56;
+        gCanvas.height = 56;
+        gCanvas.className = 'pixelated rounded-lg backdrop-checker-dark border border-slate-700/80';
+        const gCtx = gCanvas.getContext('2d');
+        gCtx.imageSmoothingEnabled = false;
+        const gSc = Math.min(48 / s.w, 48 / s.h);
+        gCtx.drawImage(s.canvas, (56 - s.w * gSc) / 2, (56 - s.h * gSc) / 2, Math.max(1, s.w * gSc), Math.max(1, s.h * gSc));
+
+        const gMeta = document.createElement('div');
+        gMeta.className = 'w-full text-center truncate font-mono text-[10px]';
+        gMeta.innerHTML = `<div class="text-slate-300 truncate">${s.name}</div><div class="text-emerald-400">${s.w}×${s.h}</div>`;
+
+        card.appendChild(gCanvas);
+        card.appendChild(gMeta);
+        galFrag.appendChild(card);
+      });
+
+      listContainer.innerHTML = '';
+      listContainer.appendChild(listFrag);
+      galleryStrip.innerHTML = '';
+      galleryStrip.appendChild(galFrag);
+    }
+
+    function toggleAllSlices(selectState) {
+      state.slices.forEach(s => { s.selected = selectState; });
+      renderSlicerCanvas();
+      renderSliceListAndGallery();
+    }
+
+    function toggleSlicerBoxes() {
+      state.slicerShowBoxes = !state.slicerShowBoxes;
+      renderSlicerCanvas();
+    }
+
+    function adjustSlicerZoom(delta) {
+      state.slicerZoom = Math.max(0.1, Math.min(16, state.slicerZoom + delta));
+      applySlicerViewportTransform();
+    }
+
+    function fitSlicerToViewport() {
+      const vp = document.getElementById('slicerViewport');
+      if (!vp) return;
+      const vw = Math.max(120, vp.clientWidth - 80);
+      const vh = Math.max(120, vp.clientHeight - 80);
+      state.slicerZoom = Math.max(0.2, Math.min(6, Math.min(vw / state.slicerWidth, vh / state.slicerHeight)));
+      state.slicerPanX = 0;
+      state.slicerPanY = 0;
+      applySlicerViewportTransform();
+    }
+
+    function applySlicerViewportTransform() {
+      const stage = document.getElementById('slicerStage');
+      stage.style.transform = `translate(${state.slicerPanX}px, ${state.slicerPanY}px) scale(${state.slicerZoom})`;
+      document.getElementById('slicerZoomBadge').textContent = `${Math.round(state.slicerZoom * 100)}%`;
+    }
+
+    function setupSlicerViewportEvents() {
+      const vp = document.getElementById('slicerViewport');
+      let dragging = false, startX = 0, startY = 0, downX = 0, downY = 0;
+
+      vp.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        state.slicerZoom = Math.max(0.1, Math.min(16, state.slicerZoom * (e.deltaY < 0 ? 1.15 : 0.87)));
+        applySlicerViewportTransform();
+      }, { passive: false });
+
+      vp.addEventListener('mousedown', (e) => {
+        dragging = true;
+        downX = e.clientX;
+        downY = e.clientY;
+        startX = e.clientX - state.slicerPanX;
+        startY = e.clientY - state.slicerPanY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging || state.workspaceMode !== 'slicer') return;
+        state.slicerPanX = e.clientX - startX;
+        state.slicerPanY = e.clientY - startY;
+        applySlicerViewportTransform();
+      });
+
+      window.addEventListener('mouseup', (e) => {
+        if (!dragging) return;
+        dragging = false;
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) < 4) {
+          const rect = slicerCanvas.getBoundingClientRect();
+          const cx = Math.floor((e.clientX - rect.left) / state.slicerZoom);
+          const cy = Math.floor((e.clientY - rect.top) / state.slicerZoom);
+          const hit = state.slices.find(s => cx >= s.x && cx < s.x + s.w && cy >= s.y && cy < s.y + s.h);
+          if (hit) {
+            hit.selected = !hit.selected;
+            renderSlicerCanvas();
+            renderSliceListAndGallery();
+          }
+        }
+      });
+    }
+
+    // PURE-JS CRC32 & UNCOMPRESSED ZIP ARCHIVE BUILDER
+    const crcTable = (() => {
+      const table = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) {
+          c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        table[n] = c >>> 0;
+      }
+      return table;
+    })();
+
+    function crc32(bytes) {
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++) {
+        crc = (crc >>> 8) ^ crcTable[(crc ^ bytes[i]) & 0xFF];
+      }
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    function dataUrlToUint8Array(dataUrl) {
+      const base64 = dataUrl.split(',')[1];
+      const bin = atob(base64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    }
+
+    function createZipBlob(files) {
+      const encoder = new TextEncoder();
+      const localParts = [];
+      const centralParts = [];
+      let offset = 0;
+
+      files.forEach(file => {
+        const nameBytes = encoder.encode(file.name);
+        const data = file.data;
+        const crc = crc32(data);
+
+        const localHeader = new Uint8Array(30 + nameBytes.length);
+        const lv = new DataView(localHeader.buffer);
+        lv.setUint32(0, 0x04034b50, true);
+        lv.setUint16(4, 20, true);
+        lv.setUint16(6, 0, true);
+        lv.setUint16(8, 0, true);
+        lv.setUint16(10, 0, true);
+        lv.setUint16(12, 0, true);
+        lv.setUint32(14, crc, true);
+        lv.setUint32(18, data.length, true);
+        lv.setUint32(22, data.length, true);
+        lv.setUint16(26, nameBytes.length, true);
+        lv.setUint16(28, 0, true);
+        localHeader.set(nameBytes, 30);
+        localParts.push(localHeader, data);
+
+        const centralHeader = new Uint8Array(46 + nameBytes.length);
+        const cv = new DataView(centralHeader.buffer);
+        cv.setUint32(0, 0x02014b50, true);
+        cv.setUint16(4, 20, true);
+        cv.setUint16(6, 20, true);
+        cv.setUint16(8, 0, true);
+        cv.setUint16(10, 0, true);
+        cv.setUint16(12, 0, true);
+        cv.setUint16(14, 0, true);
+        cv.setUint32(16, crc, true);
+        cv.setUint32(20, data.length, true);
+        cv.setUint32(24, data.length, true);
+        cv.setUint16(28, nameBytes.length, true);
+        cv.setUint16(30, 0, true);
+        cv.setUint16(32, 0, true);
+        cv.setUint16(34, 0, true);
+        cv.setUint16(36, 0, true);
+        cv.setUint32(38, 0, true);
+        cv.setUint32(42, offset, true);
+        centralHeader.set(nameBytes, 46);
+
+        centralParts.push(centralHeader);
+        offset += localHeader.length + data.length;
+      });
+
+      const centralSize = centralParts.reduce((acc, p) => acc + p.length, 0);
+      const eocd = new Uint8Array(22);
+      const ev = new DataView(eocd.buffer);
+      ev.setUint32(0, 0x06054b50, true);
+      ev.setUint16(4, 0, true);
+      ev.setUint16(6, 0, true);
+      ev.setUint16(8, files.length, true);
+      ev.setUint16(10, files.length, true);
+      ev.setUint32(12, centralSize, true);
+      ev.setUint32(16, offset, true);
+      ev.setUint16(20, 0, true);
+
+      return new Blob([...localParts, ...centralParts, eocd], { type: 'application/zip' });
+    }
+
+    function downloadSlicesAsZip() {
+      const active = state.slices.filter(s => s.selected);
+      if (active.length === 0) {
+        showToast('Select at least one slice to export.', 'warn');
+        return;
+      }
+      const files = active.map(s => ({
+        name: `${s.name}.png`,
+        data: dataUrlToUint8Array(s.canvas.toDataURL('image/png'))
+      }));
+      const zipBlob = createZipBlob(files);
+      const prefix = (document.getElementById('slicePrefixInput').value || 'slices').trim();
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${prefix}_sprites.zip`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast(`Exported ${active.length} PNGs into "${prefix}_sprites.zip"!`, 'success');
+    }
+
+    function sendSlicesToPacker(switchMode = true) {
+      const active = state.slices.filter(s => s.selected);
+      if (active.length === 0) {
+        showToast('Select at least one slice first.', 'warn');
+        return;
+      }
+      state.sprites = active.map(s => ({
+        id: state.nextId++,
+        name: s.name,
+        filename: `${s.name}.png`,
+        img: s.canvas,
+        width: s.w,
+        height: s.h,
+        trimBounds: computeTrimBounds(s.canvas, state.trimThreshold),
+        packed: { x: 0, y: 0, w: s.w, h: s.h }
+      }));
+      state.selectedSpriteId = state.sprites[0].id;
+      packAndRender(true);
+      if (switchMode) {
+        switchWorkspaceMode('packer');
+        showToast(`Sent ${active.length} extracted sprites to Packer!`, 'success');
+      }
+    }
+
+    function sendSlicesToGifStudio() {
+      const active = state.slices.filter(s => s.selected);
+      if (active.length === 0) {
+        showToast('Select at least one slice first.', 'warn');
+        return;
+      }
+      const defaultDelay = Math.round(1000 / state.gifFps);
+      state.gifFrames = active.map((s, idx) => ({
+        id: idx + 1,
+        name: s.name,
+        img: s.canvas,
+        width: s.w,
+        height: s.h,
+        enabled: true,
+        delayMs: defaultDelay
+      }));
+      state.gifCurrentFrameIdx = 0;
+      renderGifTimelineAndFilmstrip();
+      switchWorkspaceMode('gif');
+      showToast(`Loaded ${active.length} sliced frames into GIF Studio!`, 'success');
+    }
+
+    /***************************************************************************
+     * 11. MODE 3: ANIMATED GIF89a STUDIO & PURE-JS LZW ENCODER
+     ***************************************************************************/
+    const gifStageCanvas = document.getElementById('gifStageCanvas');
+    const gifStageCtx = gifStageCanvas.getContext('2d');
+
+    function openGifFromPacker() {
+      syncGifFramesFromPacker(false);
+      switchWorkspaceMode('gif');
+    }
+
+    function syncGifFramesFromPacker(notify = true) {
+      const defaultDelay = Math.round(1000 / state.gifFps);
+      state.gifFrames = state.sprites.map((s, idx) => ({
+        id: idx + 1,
+        name: s.name,
+        img: s.img,
+        width: s.width,
+        height: s.height,
+        enabled: true,
+        delayMs: defaultDelay
+      }));
+      state.gifCurrentFrameIdx = 0;
+      renderGifTimelineAndFilmstrip();
+      updateGifPreviewMetrics();
+      if (notify) showToast(`Synced ${state.gifFrames.length} frames from Packer`, 'info');
+    }
+
+    function syncGifFramesFromSlicer() {
+      if (state.slices.length === 0) {
+        sendPackedSheetToSlicer(false);
+      }
+      sendSlicesToGifStudio();
+    }
+
+    function toggleAllGifFrames(enableState) {
+      state.gifFrames.forEach(f => { f.enabled = enableState; });
+      renderGifTimelineAndFilmstrip();
+      updateGifPreviewMetrics();
+    }
+
+    function reverseGifTimeline() {
+      state.gifFrames.reverse();
+      renderGifTimelineAndFilmstrip();
+      updateGifPreviewMetrics();
+    }
+
+    function moveGifFrame(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= state.gifFrames.length) return;
+      const tmp = state.gifFrames[idx];
+      state.gifFrames[idx] = state.gifFrames[target];
+      state.gifFrames[target] = tmp;
+      renderGifTimelineAndFilmstrip();
+      updateGifPreviewMetrics();
+    }
+
+    function duplicateGifFrame(idx) {
+      const orig = state.gifFrames[idx];
+      if (!orig) return;
+      state.gifFrames.splice(idx + 1, 0, {
+        ...orig,
+        id: Date.now() + Math.random(),
+        name: `${orig.name}_copy`
+      });
+      renderGifTimelineAndFilmstrip();
+      updateGifPreviewMetrics();
+    }
+
+    function renderGifTimelineAndFilmstrip() {
+      const listEl = document.getElementById('gifTimelineList');
+      const stripEl = document.getElementById('gifFilmstripContainer');
+      const activeCount = state.gifFrames.filter(f => f.enabled).length;
+      document.getElementById('gifFrameCountBadge').textContent = activeCount;
+      updateHeaderBadges();
+
+      if (state.gifFrames.length === 0) {
+        listEl.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No frames loaded.</div>`;
+        stripEl.innerHTML = `<div class="text-xs text-slate-500">Import frames from Packer or Slicer.</div>`;
+        return;
+      }
+
+      const listFrag = document.createDocumentFragment();
+      const stripFrag = document.createDocumentFragment();
+
+      state.gifFrames.forEach((f, idx) => {
+        // Left Dock Row with Reorder & Duplicate
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between gap-1.5 p-1.5 rounded-xl border transition cursor-pointer ${
+          f.enabled ? 'bg-fuchsia-950/20 border-fuchsia-500/40 text-white' : 'bg-elevated/40 border-line text-slate-500'
+        }`;
+        row.onclick = () => {
+          f.enabled = !f.enabled;
+          renderGifTimelineAndFilmstrip();
+          updateGifPreviewMetrics();
+        };
+
+        const thumb = document.createElement('canvas');
+        thumb.width = 28;
+        thumb.height = 28;
+        thumb.className = 'pixelated rounded backdrop-checker-dark border border-slate-700 shrink-0';
+        const tCtx = thumb.getContext('2d');
+        tCtx.imageSmoothingEnabled = false;
+        const sc = Math.min(24 / f.width, 24 / f.height);
+        tCtx.drawImage(f.img, (28 - f.width * sc) / 2, (28 - f.height * sc) / 2, Math.max(1, f.width * sc), Math.max(1, f.height * sc));
+
+        const info = document.createElement('div');
+        info.className = 'flex-1 min-w-0';
+        info.innerHTML = `
+          <div class="text-xs font-medium truncate">#${idx + 1} ${f.name}</div>
+          <div class="font-mono text-[10px] text-slate-400">${f.width}×${f.height} • ${f.delayMs}ms</div>
+        `;
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-0.5 shrink-0';
+        actions.onclick = e => e.stopPropagation();
+
+        const upBtn = document.createElement('button');
+        upBtn.className = 'w-5 h-5 rounded hover:bg-white/10 text-slate-400 hover:text-white text-[10px]';
+        upBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+        upBtn.title = 'Move Up';
+        upBtn.onclick = () => moveGifFrame(idx, -1);
+
+        const dnBtn = document.createElement('button');
+        dnBtn.className = 'w-5 h-5 rounded hover:bg-white/10 text-slate-400 hover:text-white text-[10px]';
+        dnBtn.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        dnBtn.title = 'Move Down';
+        dnBtn.onclick = () => moveGifFrame(idx, 1);
+
+        const dupBtn = document.createElement('button');
+        dupBtn.className = 'w-5 h-5 rounded hover:bg-fuchsia-500/25 text-slate-400 hover:text-fuchsia-300 text-[10px]';
+        dupBtn.innerHTML = '<i class="fa-regular fa-clone"></i>';
+        dupBtn.title = 'Duplicate Frame';
+        dupBtn.onclick = () => duplicateGifFrame(idx);
+
+        actions.appendChild(upBtn);
+        actions.appendChild(dnBtn);
+        actions.appendChild(dupBtn);
+
+        row.appendChild(thumb);
+        row.appendChild(info);
+        row.appendChild(actions);
+        listFrag.appendChild(row);
+
+        // Bottom Filmstrip Card with Per-Frame Delay Input
+        const card = document.createElement('div');
+        card.className = `shrink-0 w-24 h-32 rounded-xl border p-2 flex flex-col items-center justify-between transition ${
+          f.enabled ? 'bg-elevated border-fuchsia-500/45 text-slate-200' : 'bg-elevated/30 border-line text-slate-500 opacity-50'
+        }`;
+
+        const topBar = document.createElement('div');
+        topBar.className = 'w-full flex items-center justify-between text-[10px] font-mono';
+        topBar.innerHTML = `<span class="text-fuchsia-300 font-semibold">#${idx + 1}</span>`;
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = f.enabled;
+        chk.className = 'accent-fuchsia-500 cursor-pointer';
+        chk.onchange = () => {
+          f.enabled = chk.checked;
+          renderGifTimelineAndFilmstrip();
+          updateGifPreviewMetrics();
+        };
+        topBar.appendChild(chk);
+
+        const sCanvas = document.createElement('canvas');
+        sCanvas.width = 52;
+        sCanvas.height = 52;
+        sCanvas.className = 'pixelated rounded-lg backdrop-checker-dark border border-slate-700/80 cursor-pointer';
+        const sCtx = sCanvas.getContext('2d');
+        sCtx.imageSmoothingEnabled = false;
+        const sSc = Math.min(46 / f.width, 46 / f.height);
+        sCtx.drawImage(f.img, (52 - f.width * sSc) / 2, (52 - f.height * sSc) / 2, Math.max(1, f.width * sSc), Math.max(1, f.height * sSc));
+        sCanvas.onclick = () => {
+          state.gifCurrentFrameIdx = idx;
+          renderGifStageFrame();
+        };
+
+        const delayWrap = document.createElement('div');
+        delayWrap.className = 'num-field w-full !h-6 !px-1.5';
+        const delayInput = document.createElement('input');
+        delayInput.type = 'number';
+        delayInput.min = '20';
+        delayInput.max = '5000';
+        delayInput.value = f.delayMs;
+        delayInput.onchange = () => {
+          f.delayMs = Math.max(20, parseInt(delayInput.value, 10) || 83);
+          updateGifPreviewMetrics();
+          renderGifTimelineAndFilmstrip();
+        };
+        const unitSpan = document.createElement('span');
+        unitSpan.className = 'unit';
+        unitSpan.textContent = 'ms';
+        delayWrap.appendChild(delayInput);
+        delayWrap.appendChild(unitSpan);
+
+        card.appendChild(topBar);
+        card.appendChild(sCanvas);
+        card.appendChild(delayWrap);
+        stripFrag.appendChild(card);
+      });
+
+      listEl.innerHTML = '';
+      listEl.appendChild(listFrag);
+      stripEl.innerHTML = '';
+      stripEl.appendChild(stripFrag);
+    }
+
+    function onGifFpsChange(val) {
+      state.gifFps = Math.max(1, Math.min(50, parseInt(val, 10) || 12));
+      const ms = Math.round(1000 / state.gifFps);
+      document.getElementById('gifFpsLabel').textContent = `${state.gifFps} FPS (${ms} ms)`;
+      state.gifFrames.forEach(f => { f.delayMs = ms; });
+      renderGifTimelineAndFilmstrip();
+      updateGifPreviewMetrics();
+    }
+
+    function toggleGifPreviewPlay() {
+      state.gifPlaying = !state.gifPlaying;
+      document.getElementById('gifStagePlayIcon').className = state.gifPlaying ? 'fa-solid fa-pause text-[10px]' : 'fa-solid fa-play text-[10px]';
+      document.getElementById('gifStagePlayText').textContent = state.gifPlaying ? 'Playing' : 'Paused';
+    }
+
+    function getOrderedGifFrames() {
+      const enabled = state.gifFrames.filter(f => f.enabled);
+      const dir = document.getElementById('gifLoopDirection').value;
+      if (dir === 'reverse') return [...enabled].reverse();
+      if (dir === 'pingpong' && enabled.length > 2) {
+        return [...enabled, ...enabled.slice(1, -1).reverse()];
+      }
+      return enabled;
+    }
+
+    function getGifDimensions() {
+      const active = state.gifFrames.filter(f => f.enabled);
+      const scale = parseInt(document.getElementById('gifScaleSelect').value, 10) || 2;
+      const pad = parseInt(document.getElementById('gifPadRange').value, 10) || 0;
+      let maxW = 32, maxH = 32;
+      active.forEach(f => {
+        if (f.width > maxW) maxW = f.width;
+        if (f.height > maxH) maxH = f.height;
+      });
+      return {
+        outW: (maxW + pad * 2) * scale,
+        outH: (maxH + pad * 2) * scale,
+        scale,
+        pad
+      };
+    }
+
+    function updateGifPreviewMetrics() {
+      const isTrans = document.getElementById('gifTransparentToggle').checked;
+      document.getElementById('gifBgColorBox').classList.toggle('hidden', isTrans);
+
+      const dims = getGifDimensions();
+      gifStageCanvas.width = dims.outW;
+      gifStageCanvas.height = dims.outH;
+      document.getElementById('gifOutputDimReadout').textContent = `${dims.outW}×${dims.outH} px`;
+
+      const seq = getOrderedGifFrames();
+      const totalMs = seq.reduce((acc, f) => acc + (f.delayMs || 83), 0);
+      document.getElementById('gifTotalDurationReadout').textContent = `Total Loop: ${(totalMs / 1000).toFixed(2)}s (${seq.length} frames)`;
+      renderGifStageFrame();
+    }
+
+    function drawFrameToGifContext(ctx, frame, dims, isTransparent, bgColorHex) {
+      const { outW, outH, scale, pad } = dims;
+      ctx.clearRect(0, 0, outW, outH);
+      if (!isTransparent) {
+        ctx.fillStyle = bgColorHex;
+        ctx.fillRect(0, 0, outW, outH);
+      }
+      ctx.imageSmoothingEnabled = false;
+      const align = document.getElementById('gifAlignSelect').value;
+      const fw = frame.width * scale;
+      const fh = frame.height * scale;
+
+      let dx = Math.floor((outW - fw) / 2);
+      let dy = Math.floor((outH - fh) / 2);
+      if (align === 'bottom') {
+        dy = outH - fh - pad * scale;
+      } else if (align === 'topleft') {
+        dx = pad * scale;
+        dy = pad * scale;
+      }
+      ctx.drawImage(frame.img, dx, dy, fw, fh);
+    }
+
+    function renderGifStageFrame() {
+      const seq = getOrderedGifFrames();
+      if (seq.length === 0) return;
+      if (state.gifCurrentFrameIdx >= seq.length) state.gifCurrentFrameIdx = 0;
+
+      const dims = getGifDimensions();
+      const isTrans = document.getElementById('gifTransparentToggle').checked;
+      const bgHex = document.getElementById('gifBgColorPicker').value;
+
+      drawFrameToGifContext(gifStageCtx, seq[state.gifCurrentFrameIdx], dims, isTrans, bgHex);
+      document.getElementById('gifStageFrameReadout').textContent = `Frame ${state.gifCurrentFrameIdx + 1} / ${seq.length}`;
+    }
+
+    // PURE-JS GIF89a LZW ENCODER WITH PER-FRAME DELAYS & TRANSPARENCY KEY
+    function encodeGIF89a(framesPayload, width, height, useTransparency) {
+      const out = [];
+      const writeByte = (b) => out.push(b & 0xFF);
+      const writeShort = (s) => { out.push(s & 0xFF, (s >> 8) & 0xFF); };
+      const writeASCII = (str) => { for (let i = 0; i < str.length; i++) out.push(str.charCodeAt(i)); };
+
+      const palette = new Uint8Array(256 * 3);
+      const colorCounts = new Map();
+
+      framesPayload.forEach(fp => {
+        const d = fp.imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          if (useTransparency && d[i + 3] < 128) continue;
+          const key = ((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3);
+          colorCounts.set(key, (colorCounts.get(key) || 0) + 1);
+        }
+      });
+
+      const sortedColors = [...colorCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 255);
+      const numColors = sortedColors.length;
+      for (let i = 0; i < numColors; i++) {
+        const key = sortedColors[i][0];
+        palette[i * 3] = Math.round(((key >> 10) & 31) * 255 / 31);
+        palette[i * 3 + 1] = Math.round(((key >> 5) & 31) * 255 / 31);
+        palette[i * 3 + 2] = Math.round((key & 31) * 255 / 31);
+      }
+
+      const lut = new Int16Array(32768).fill(-1);
+      function findClosestIndex(r, g, b) {
+        const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+        if (lut[key] !== -1) return lut[key];
+        let bestIdx = 0, bestDist = Infinity;
+        for (let i = 0; i < numColors; i++) {
+          const dr = r - palette[i * 3];
+          const dg = g - palette[i * 3 + 1];
+          const db = b - palette[i * 3 + 2];
+          const dist = dr * dr + dg * dg + db * db;
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestIdx = i;
+            if (dist === 0) break;
+          }
+        }
+        lut[key] = bestIdx;
+        return bestIdx;
+      }
+
+      writeASCII('GIF89a');
+      writeShort(width);
+      writeShort(height);
+      writeByte(0xF7);
+      writeByte(255);
+      writeByte(0);
+
+      for (let i = 0; i < 768; i++) writeByte(palette[i]);
+
+      writeByte(0x21); writeByte(0xFF); writeByte(11);
+      writeASCII('NETSCAPE2.0');
+      writeByte(3); writeByte(1); writeShort(0); writeByte(0);
+
+      function writeLZWFrame(indices) {
+        const minCodeSize = 8;
+        writeByte(minCodeSize);
+
+        const clearCode = 1 << minCodeSize;
+        const eoiCode = clearCode + 1;
+        let codeSize = minCodeSize + 1;
+        let nextCode = eoiCode + 1;
+        const dict = new Map();
+
+        let bitBuf = 0;
+        let bitCount = 0;
+        const subBlock = [];
+
+        const flushSubBlock = () => {
+          if (subBlock.length > 0) {
+            writeByte(subBlock.length);
+            for (let i = 0; i < subBlock.length; i++) writeByte(subBlock[i]);
+            subBlock.length = 0;
+          }
+        };
+
+        const emitCode = (code) => {
+          bitBuf |= (code << bitCount);
+          bitCount += codeSize;
+          while (bitCount >= 8) {
+            subBlock.push(bitBuf & 0xFF);
+            if (subBlock.length === 255) flushSubBlock();
+            bitBuf >>= 8;
+            bitCount -= 8;
+          }
+        };
+
+        emitCode(clearCode);
+        let prefix = indices[0];
+
+        for (let i = 1; i < indices.length; i++) {
+          const suffix = indices[i];
+          const key = (prefix << 8) | suffix;
+          if (dict.has(key)) {
+            prefix = dict.get(key);
+          } else {
+            emitCode(prefix);
+            dict.set(key, nextCode++);
+            if (nextCode > (1 << codeSize) && codeSize < 12) {
+              codeSize++;
+            } else if (nextCode >= 4096) {
+              emitCode(clearCode);
+              dict.clear();
+              codeSize = minCodeSize + 1;
+              nextCode = eoiCode + 1;
+            }
+            prefix = suffix;
+          }
+        }
+
+        emitCode(prefix);
+        emitCode(eoiCode);
+        if (bitCount > 0) subBlock.push(bitBuf & 0xFF);
+        flushSubBlock();
+        writeByte(0x00);
+      }
+
+      const numPixels = width * height;
+      const indexedPixels = new Uint8Array(numPixels);
+
+      framesPayload.forEach(fp => {
+        writeByte(0x21);
+        writeByte(0xF9);
+        writeByte(4);
+        writeByte(useTransparency ? 0x09 : 0x04);
+        writeShort(fp.delayCs);
+        writeByte(useTransparency ? 255 : 0);
+        writeByte(0);
+
+        writeByte(0x2C);
+        writeShort(0);
+        writeShort(0);
+        writeShort(width);
+        writeShort(height);
+        writeByte(0);
+
+        const d = fp.imgData.data;
+        for (let p = 0; p < numPixels; p++) {
+          const off = p * 4;
+          if (useTransparency && d[off + 3] < 128) {
+            indexedPixels[p] = 255;
+          } else {
+            indexedPixels[p] = findClosestIndex(d[off], d[off + 1], d[off + 2]);
+          }
+        }
+        writeLZWFrame(indexedPixels);
+      });
+
+      writeByte(0x3B);
+      return new Blob([new Uint8Array(out)], { type: 'image/gif' });
+    }
+
+    function encodeAndDownloadGIF() {
+      const seq = getOrderedGifFrames();
+      if (seq.length === 0) {
+        showToast('Enable at least one frame to render a GIF.', 'warn');
+        return;
+      }
+
+      const dims = getGifDimensions();
+      const isTrans = document.getElementById('gifTransparentToggle').checked;
+      const bgHex = document.getElementById('gifBgColorPicker').value;
+
+      const workCanvas = document.createElement('canvas');
+      workCanvas.width = dims.outW;
+      workCanvas.height = dims.outH;
+      const workCtx = workCanvas.getContext('2d', { willReadFrequently: true });
+
+      const framesPayload = seq.map(frame => {
+        drawFrameToGifContext(workCtx, frame, dims, isTrans, bgHex);
+        return {
+          imgData: workCtx.getImageData(0, 0, dims.outW, dims.outH),
+          delayCs: Math.max(2, Math.round((frame.delayMs || 83) / 10))
+        };
+      });
+
+      const gifBlob = encodeGIF89a(framesPayload, dims.outW, dims.outH, isTrans);
+      const baseName = getBaseSheetName();
+      const url = URL.createObjectURL(gifBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${baseName}.gif`;
+      a.click();
+
+      const kb = (gifBlob.size / 1024).toFixed(1);
+      const banner = document.getElementById('gifEncodedResultBanner');
+      banner.classList.remove('hidden');
+      banner.classList.add('flex');
+      document.getElementById('gifEncodedSummary').textContent = `Encoded ${seq.length} frames • ${dims.outW}×${dims.outH} px • ${kb} KB`;
+      const link = document.getElementById('gifDirectDownloadLink');
+      link.href = url;
+      link.download = `${baseName}.gif`;
+
+      showToast(`Rendered & downloaded "${baseName}.gif" (${kb} KB)!`, 'success');
+    }
+
+    /***************************************************************************
+     * 12. WORKSPACE MODE SWITCHER & GLOBAL DRAG-AND-DROP
+     ***************************************************************************/
+    function switchWorkspaceMode(mode) {
+      state.workspaceMode = mode;
+      const activeClassMap = {
+        packer: 'seg-btn active-indigo',
+        slicer: 'seg-btn active-emerald',
+        gif: 'seg-btn active-fuchsia'
+      };
+
+      ['packer', 'slicer', 'gif'].forEach(m => {
+        const ws = document.getElementById(`workspace-${m}`);
+        const tab = document.getElementById(`modeTab-${m}`);
+        const hdr = document.getElementById(`headerActions${m.charAt(0).toUpperCase() + m.slice(1)}`);
+        if (m === mode) {
+          ws.classList.remove('hidden');
+          ws.classList.add('flex');
+          tab.className = activeClassMap[m];
+          hdr.classList.remove('hidden');
+          hdr.classList.add('flex');
+        } else {
+          ws.classList.add('hidden');
+          ws.classList.remove('flex');
+          tab.className = 'seg-btn';
+          hdr.classList.add('hidden');
+          hdr.classList.remove('flex');
+        }
+      });
+
+      if (mode === 'slicer') {
+        if (!state.slicerImg) {
+          sendPackedSheetToSlicer(false);
+        } else {
+          renderSlicerCanvas();
+          fitSlicerToViewport();
+        }
+      } else if (mode === 'gif') {
+        if (state.gifFrames.length === 0) {
+          syncGifFramesFromPacker(false);
+        }
+        updateGifPreviewMetrics();
+      } else {
+        fitPackerViewport();
+      }
+    }
+
+    function setupGlobalDragAndDrop() {
+      const overlay = document.getElementById('globalDropOverlay');
+      let dragDepth = 0;
+
+      window.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragDepth++;
+        if (state.workspaceMode === 'slicer') {
+          document.getElementById('dropOverlayTitle').textContent = 'Drop Spritesheet PNG to Slice';
+          document.getElementById('dropOverlaySub').textContent = 'Automatically detects islands or grid cells locally';
+        } else {
+          document.getElementById('dropOverlayTitle').textContent = 'Drop Unlimited PNG Sprites Anywhere';
+          document.getElementById('dropOverlaySub').textContent = '100% local processing — 32-bit RGBA transparency preserved';
+        }
+        overlay.classList.remove('hidden');
+      });
+
+      window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+
+      window.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) overlay.classList.add('hidden');
+      });
+
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragDepth = 0;
+        overlay.classList.add('hidden');
+        const files = Array.from(e.dataTransfer.files || []);
+        if (files.length === 0) return;
+
+        if (state.workspaceMode === 'slicer') {
+          handleSlicerFileSelect({ target: { files } });
+        } else {
+          ingestSpriteFiles(files);
+        }
+      });
+    }
+
+    /***************************************************************************
+     * 13. UNIFIED ANIMATION LOOP & WINDOW INITIALIZATION
+     ***************************************************************************/
+    function startStudioAnimationLoop() {
+      let lastPackerTick = performance.now();
+      let lastGifTick = performance.now();
+
+      function tick(now) {
+        // Mode 1: Packer Dock Animation
+        if (state.workspaceMode === 'packer' && state.animPlaying && state.sprites.length > 0) {
+          const interval = 1000 / Math.max(1, state.animFps);
+          if (now - lastPackerTick >= interval) {
+            lastPackerTick = now;
+            state.animFrameIndex = (state.animFrameIndex + 1) % state.sprites.length;
+            renderPackerAnimFrame();
+            renderPackerFilmstrip();
+          }
+        }
+
+        // Mode 3: GIF Studio Stage Animation (respects per-frame delayMs)
+        if (state.workspaceMode === 'gif' && state.gifPlaying) {
+          const seq = getOrderedGifFrames();
+          if (seq.length > 0) {
+            if (state.gifCurrentFrameIdx >= seq.length) state.gifCurrentFrameIdx = 0;
+            const currentDelay = seq[state.gifCurrentFrameIdx].delayMs || Math.round(1000 / state.gifFps);
+            if (now - lastGifTick >= currentDelay) {
+              lastGifTick = now;
+              state.gifCurrentFrameIdx = (state.gifCurrentFrameIdx + 1) % seq.length;
+              renderGifStageFrame();
+            }
+          }
+        }
+
+        requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    window.onload = function () {
+      setupGlobalDragAndDrop();
+      setupPackerViewportEvents();
+      setupSlicerViewportEvents();
+      startStudioAnimationLoop();
+
+      // Load the 12-frame Hero Knight pack immediately on startup
+      loadDemoSprites('knight');
+
+      window.addEventListener('resize', () => {
+        if (state.workspaceMode === 'packer') fitPackerViewport();
+        if (state.workspaceMode === 'slicer') fitSlicerToViewport();
+      });
+    };
+  </script>
+</body>
+</html>
